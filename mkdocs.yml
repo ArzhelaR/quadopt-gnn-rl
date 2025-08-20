@@ -1,0 +1,33 @@
+site_name: TUNE
+repo_url: https://github.com/LIHPC-Computational-Geometry/tune
+repo_name: tune/tune
+docs_dir: docs/
+
+markdown_extensions:
+    - tables
+    - toc
+    - pymdownx.highlight:
+          anchor_linenums: true
+          line_spans: __span
+          pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences
+
+theme:
+    name: material
+    features:
+        - navigation.top
+
+nav:
+  - Home: 'index.md'
+  - 'Project Design':
+    - 'Combinatorial map': 'cmap.md'
+    - 'Observation': 'observation.md'
+    - 'Actions': 'actions.md'
+    - 'What to do': 'design.md'
+  - 'Developer Guide':
+    - 'Tools': 'dev/tools.md'
+  - 'Documentation' :
+    - 'Tests':
+        - 'tests/actions.md'
