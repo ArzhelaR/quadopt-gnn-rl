@@ -217,54 +217,60 @@ class QuadMeshEnv(gym.Env):
     def step(self, action: np.ndarray):
         mesh_before = deepcopy(self.mesh)
         self.ep_len+=1
-        dart_id = self._action_to_dart_id(action)
-        d = Dart(self.mesh, dart_id)
-        d1 = d.get_beta(1)
-        n1 = d.get_node()
-        n2 = d1.get_node()
-        valid_action = False
-        if action[0] == Actions.FLIP_CW.value:
-            self.actions_info["n_flip_cw"] += 1
-            valid_action = flip_edge_cw(self.mesh_analysis, n1, n2)
-        elif action[0] == Actions.FLIP_CNTCW.value:
-            self.actions_info["n_flip_cntcw"] += 1
-            valid_action= flip_edge_cntcw(self.mesh_analysis, n1, n2)
-        elif action[0] == Actions.SPLIT.value:
-            self.actions_info["n_split"] += 1
-            valid_action= split_edge(self.mesh_analysis, n1, n2)
-        elif action[0] == Actions.COLLAPSE.value:
-            self.actions_info["n_collapse"] += 1
-            valid_action = collapse_edge(self.mesh_analysis, n1, n2)
-        elif action[0] == Actions.CLEANUP.value:
-            self.actions_info["n_cleanup"] += 1
-            valid_action = cleanup_edge(self.mesh_analysis, n1, n2)
-        else:
-            raise ValueError("Action not defined")
 
         if self.observation_count:
             self.observation_registry.register_observation(self.observation)
 
-        if valid_action:
-            # An episode is done if the actual score is the same as the ideal
-            next_nodes_score, self.next_mesh_score, _, next_nodes_adjacency = self.mesh_analysis.global_score(mesh_before = mesh_before)
-            self.last_nodes_scores = self._nodes_scores
-            terminated = np.array_equal(self._ideal_score, self.next_mesh_score)
-            if terminated:
-                mesh_reward = (self._mesh_score - self.next_mesh_score)*10
-                reward = mesh_reward
+        dart_id = self._action_to_dart_id(action)
+        valid_action = False
+        mesh_reward = 0
+        reward = 0
+        terminated = False
+
+        if dart_id != -1 :
+            d = Dart(self.mesh, dart_id)
+            d1 = d.get_beta(1)
+            n1 = d.get_node()
+            n2 = d1.get_node()
+            if action[0] == Actions.FLIP_CW.value:
+                self.actions_info["n_flip_cw"] += 1
+                valid_action = flip_edge_cw(self.mesh_analysis, n1, n2)
+            elif action[0] == Actions.FLIP_CNTCW.value:
+                self.actions_info["n_flip_cntcw"] += 1
+                valid_action= flip_edge_cntcw(self.mesh_analysis, n1, n2)
+            elif action[0] == Actions.SPLIT.value:
+                self.actions_info["n_split"] += 1
+                valid_action= split_edge(self.mesh_analysis, n1, n2)
+            elif action[0] == Actions.COLLAPSE.value:
+                self.actions_info["n_collapse"] += 1
+                valid_action = collapse_edge(self.mesh_analysis, n1, n2)
+            elif action[0] == Actions.CLEANUP.value:
+                self.actions_info["n_cleanup"] += 1
+                valid_action = cleanup_edge(self.mesh_analysis, n1, n2)
             else:
-                mesh_reward = (self._mesh_score - self.next_mesh_score)*10
-                reward = mesh_reward
-            self._nodes_scores, self._mesh_score, self._nodes_adjacency = next_nodes_score, self.next_mesh_score, next_nodes_adjacency
-            self.observation = self._get_obs()
-            self.nb_invalid_actions = 0
-        elif not valid_action:
-            reward = -5
-            mesh_reward = 0
-            terminated = False
-            self.nb_invalid_actions += 1
-        else:
-            raise ValueError("Invalid action")
+                raise ValueError("Action not defined")
+
+            if valid_action:
+                # An episode is done if the actual score is the same as the ideal
+                next_nodes_score, self.next_mesh_score, _, next_nodes_adjacency = self.mesh_analysis.global_score(mesh_before = mesh_before)
+                self.last_nodes_scores = self._nodes_scores
+                terminated = np.array_equal(self._ideal_score, self.next_mesh_score)
+                if terminated:
+                    mesh_reward = (self._mesh_score - self.next_mesh_score)*10
+                    reward = mesh_reward
+                else:
+                    mesh_reward = (self._mesh_score - self.next_mesh_score)*10
+                    reward = mesh_reward
+                self._nodes_scores, self._mesh_score, self._nodes_adjacency = next_nodes_score, self.next_mesh_score, next_nodes_adjacency
+                self.observation = self._get_obs()
+                self.nb_invalid_actions = 0
+            elif not valid_action:
+                reward = -5
+                mesh_reward = 0
+                terminated = False
+                self.nb_invalid_actions += 1
+            else:
+                raise ValueError("Invalid action")
         if self.nb_invalid_actions > 10 :
             truncated = self.mesh_analysis.isTruncated(self.darts_selected)
         else:
@@ -274,7 +280,7 @@ class QuadMeshEnv(gym.Env):
 
         if self.render_mode == "human":
             self._render_frame()
-        if terminated or self.ep_len>= 5:
+        if terminated or self.ep_len>= self.max_steps:
             if self.recording and self.frames:
                 imageio.mimsave(f"episode_{self.episode_count}.gif", self.frames, fps=1)
                 print("Image recorded")

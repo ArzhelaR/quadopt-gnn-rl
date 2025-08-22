@@ -35,8 +35,12 @@ def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricte
         valid_template = template
     score_sum = np.sum(np.abs(valid_template[:,:deep]), axis=1)
     indices_selected_darts = np.argsort(score_sum)[-n_darts_selected:][::-1]
+
     valid_dart_ids = [darts_id[i] for i in indices_selected_darts]
     X = valid_template[indices_selected_darts, :]
+    while len(valid_dart_ids) != n_darts_selected:
+        valid_dart_ids.append(-1)
+        X = np.vstack((X, np.zeros((1, X.shape[1]))))
     return X, np.array(valid_dart_ids)
 
 
