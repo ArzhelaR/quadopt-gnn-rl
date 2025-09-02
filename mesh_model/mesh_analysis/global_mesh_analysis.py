@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import math
 from math import sqrt, degrees, acos, atan2
 from abc import ABC, abstractmethod
-from shapely import affinity
-from shapely.geometry import Polygon, Point, LineString
 
 from mesh_model.mesh_struct.mesh_elements import Dart, Node, Face
 from mesh_model.mesh_struct.mesh import Mesh
@@ -77,9 +75,9 @@ class NodeAnalysis:
             d_twin = d.get_beta(2)
             if d_twin is None:
                 boundary_darts.append(d)
-        #if len(boundary_darts) > 2 : # or len(boundary_darts) < 2
-            #plot_mesh(self.n.mesh)
-            #raise ValueError("Boundary error")
+        # if len(boundary_darts) > 2 : # or len(boundary_darts) < 2
+        #     plot_mesh(self.n.mesh)
+        #     raise ValueError("Boundary error")
         angle = self.get_angle(boundary_darts[0], boundary_darts[1])
         return angle
 
@@ -228,6 +226,7 @@ class GlobalMeshAnalysis(ABC):
             * beta2(d) != beta1(d)
             * if beta2(d) is None, n1 and n2 are boundary nodes
             * The nodes at the ends of d and d2 must be the same.
+            * d and d2 must be on different faces
         :param dart_info: dart info to check
         :return: True if all checks passed, raise a Value Error otherwise
         """
@@ -241,9 +240,14 @@ class GlobalMeshAnalysis(ABC):
 
         if d2_id >= 0:
             # Get nodes at the ends of d2
-            n21 = Dart(self.mesh, d2_id).get_node()
-            d21 = Dart(self.mesh, d2_id).get_beta(1)
+            d = Dart(self.mesh, d_id)
+            d2 = Dart(self.mesh, d2_id)
+            n21 = d2.get_node()
+            d21 = d2.get_beta(1)
             n22 = d21.get_node()
+
+            if d.get_face() == d2.get_face():
+                return False
 
         if d2_id >= 0 and self.mesh.dart_info[ d2_id, 0] < 0:
             # raise ValueError("error beta2")
@@ -261,6 +265,7 @@ class GlobalMeshAnalysis(ABC):
         elif d2_id >=0 and (n21 != n2 or n1 != n22):
             # raise ValueError("different nodes at extremities")
             return False
+
         return True
 
     def check_beta1_relation(self, dart_info) -> bool:
@@ -303,6 +308,8 @@ class GlobalMeshAnalysis(ABC):
         valid = True
         for dart_info in self.mesh.active_darts():
             valid = self.check_beta2_relation(dart_info) and self.check_beta1_relation(dart_info)
+            if not valid:
+                return valid
         # If there is more than one face, none of them should be isolated.
         if len(self.mesh.active_faces()) != 1:
             valid = self.check_isolated_faces()

@@ -42,8 +42,3 @@ def write_json(filename: string, mesh: Mesh) -> None:
 
     with open(filename, "w") as f:
         json.dump(data, f)
-
-
-if __name__ == "__main__":
-    cmap = read_gmsh("../mesh_files/t1_tri.msh")
-    write_json("t1_tri-test.json", cmap)

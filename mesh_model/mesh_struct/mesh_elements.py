@@ -292,6 +292,18 @@ class Face:
         self.mesh = m
         self.id = face_id
 
+    def __eq__(self, a_face: Face) -> bool:
+        """
+        Equality operator between two faces. It is only based on the mesh_struct and node info and
+        not on the node coordinate
+        :param a_face: another face
+        :return: true if the faces are equal, false otherwise
+        """
+        if a_face is None:
+            return False
+        else:
+            return self.mesh == a_face.mesh and self.id == a_face.id
+
     def get_nodes(self) -> list[Node]:
         """
         Gives access to the list of nodes that bounds the faces. To get

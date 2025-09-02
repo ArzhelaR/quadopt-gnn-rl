@@ -44,3 +44,18 @@ The **collapse** action can be decomposed as follows:
 * Link the dart associated with `n3` to an existing node.  
 * Update the **beta2** relations (`d2`/`d12`, `d112`/`d1112`).  
 * Recalculate the scores of the affected nodes.
+
+## Cleanup
+
+The **cleanup** action can be decomposed as follows:
+
+* Check whether the dart `d` exists.
+* Retrieve all parallel darts `dp` to `d`.
+* Retrieve all nodes to be merge in `nto` and `nfrom`.
+* For all parallel dart `dp`:
+  * Delete the node
+  * Update node link of all darts linked to the deleted node.
+  * Update beta2 relation
+  * Delete the face of `d`
+  * Update node score (this step may be optimize)
+  

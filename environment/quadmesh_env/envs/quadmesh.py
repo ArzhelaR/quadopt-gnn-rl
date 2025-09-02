@@ -5,6 +5,7 @@ from copy import deepcopy
 import pygame
 import imageio
 import sys
+import os
 
 import numpy as np
 import gymnasium as gym
@@ -127,6 +128,8 @@ class QuadMeshEnv(gym.Env):
 
             self.recording = False
             self.frames = []
+
+            os.makedirs("episode_recordings", exist_ok=True)
 
         # Observation and action spaces
         self.observation_space = gym.spaces.Box(
@@ -282,7 +285,7 @@ class QuadMeshEnv(gym.Env):
             self._render_frame()
         if terminated or self.ep_len>= self.max_steps:
             if self.recording and self.frames:
-                imageio.mimsave(f"episode_{self.episode_count}.gif", self.frames, fps=1)
+                imageio.mimsave(f"episode_recordings/episode_{self.episode_count}.gif", self.frames, fps=1)
                 print("Image recorded")
                 self.episode_count +=1
 

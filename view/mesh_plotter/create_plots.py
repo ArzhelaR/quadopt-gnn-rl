@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from numpy import ndarray
-
+import seaborn as sns
+import numpy as np
+from scipy.stats import gaussian_kde
 
 def plot_test_results(rewards: ndarray, wins: ndarray, steps: ndarray, normalized_return: ndarray) -> None:
     """
@@ -39,6 +41,48 @@ def plot_test_results(rewards: ndarray, wins: ndarray, steps: ndarray, normalize
     # Ajuster l'espacement entre les sous-graphes
     plt.tight_layout()
     # Afficher les graphiques
+    plt.show()
+
+
+def plot_density(normalized_return: ndarray):
+
+    # Figure
+    plt.figure(figsize=(15, 4))
+
+    # --- 1. Histogramme brut ---
+    plt.subplot(1, 3, 1)
+    plt.hist(normalized_return, bins=10, color="green", edgecolor="black")
+    plt.title("Histogramme brut")
+    plt.xlabel("Retour normalisé")
+    plt.ylabel("Nombre de maillages")
+
+    # --- 2. Histogramme + densité normalisée ---
+    plt.subplot(1, 3, 2)
+    sns.histplot(normalized_return, bins=10, color="green", edgecolor="black", stat="density", kde=False,
+                 label="Histogramme (densité)")
+    sns.kdeplot(normalized_return, color="red", linewidth=2, label="Densité KDE", clip=(0,1))
+    plt.title("Histogramme + densité normalisée")
+    plt.xlabel("Retour normalisé")
+    plt.ylabel("Densité")
+    plt.legend()
+
+    # --- 3. Histogramme + densité mise à l’échelle ---
+    plt.subplot(1, 3, 3)
+    counts, bins, _ = plt.hist(normalized_return, bins=10, color="green", edgecolor="black", label="Histogramme")
+
+    # KDE avec mise à l'échelle
+    x = np.linspace(0, 1, 200)
+    kde = gaussian_kde(normalized_return)
+    kde_scaled = kde(x) * len(normalized_return) * (bins[1] - bins[0])
+    plt.plot(x, kde_scaled, color="red", linewidth=2, label="Densité mise à l’échelle")
+
+    plt.title("Histogramme + densité à l’échelle")
+    plt.xlabel("Retour normalisé")
+    plt.ylabel("Nombre de maillages")
+    plt.xlim(0, 1)
+    plt.legend()
+
+    plt.tight_layout()
     plt.show()
 
 

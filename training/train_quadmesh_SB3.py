@@ -17,7 +17,7 @@ from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import Figure, HParam
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback, EvalCallback, StopTrainingOnNoModelImprovement, ProgressBarCallback
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback, StopTrainingOnNoModelImprovement, ProgressBarCallback, CheckpointCallback
 
 from environment.quadmesh_env.wrappers import MeanRewardWrapper, WeightedRewardWrapper, CleanupWrapper
 
@@ -265,6 +265,16 @@ if __name__ == '__main__':
     #     save_code=True,  # optional
     # )
 
+    # SAVING MODEL CALLBACK
+    save_dir = os.path.join(config["paths"]["policy_saving_dir"], experiment_name)
+    os.makedirs(save_dir, exist_ok=True)
+
+    checkpoint_callback = CheckpointCallback(
+        save_freq=100_000,  # saving model every 100k timestep
+        save_path=save_dir,
+        name_prefix=experiment_name
+    )
+
     # EVALUATION CALLBACKS
 
     # Separate evaluation env
@@ -305,8 +315,9 @@ if __name__ == '__main__':
             render_mode=config["env"]["render_mode"],
             obs_count=config["env"]["obs_count"],
         )
-        wrapped_env = CleanupWrapper(env)
-        #check_env(wrapped_env, warn=True)
+        #wrapped_env = CleanupWrapper(env)
+    wrapped_env = env
+    check_env(env, warn=True)
 
 
     model = PPO(
@@ -321,12 +332,14 @@ if __name__ == '__main__':
         tensorboard_log=log_dir
     )
 
+    #model = PPO.load("training/policy_saved/quad-sb3/New-dataset-v0.zip", env= wrapped_env)
+
     start_time = time.perf_counter()
     print("-----------Starting learning-----------")
     model.learn(
         total_timesteps=config["total_timesteps"],
         tb_log_name=config["experiment_name"],
-        callback=[HParamCallback(),TensorboardCallback(model)], #  WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"]),
+        callback=[HParamCallback(),TensorboardCallback(model), checkpoint_callback], #  WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"]),
         progress_bar=True
     )
     end_time = time.perf_counter()

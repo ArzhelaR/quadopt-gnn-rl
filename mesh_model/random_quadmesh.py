@@ -88,4 +88,4 @@ def random_dataset(mesh_dir: string) -> None:
 
 
 if __name__ == '__main__':
-    random_dataset("../training/dataset/QuadMesh/random_simple_quad_5_actions")
+    random_dataset("../training/dataset/QuadMesh-old/random_simple_quad_5_actions")

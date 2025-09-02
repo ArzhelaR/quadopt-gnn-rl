@@ -1,6 +1,5 @@
-from view.mesh_plotter.mesh_plots import plot_dataset, plot_mesh
-from mesh_model.reader import read_gmsh
-from mesh_model.random_trimesh import random_mesh
+from view.mesh_plotter.mesh_plots import plot_dataset
+from mesh_model.reader import read_dataset
 
-mesh = read_gmsh('../../mesh_files/simple_quad.msh')
-plot_mesh(mesh)
+dataset = read_dataset("../../training/dataset/QuadMesh-old/test_dataset")
+plot_dataset(dataset)

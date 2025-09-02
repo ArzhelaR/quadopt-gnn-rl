@@ -7,6 +7,11 @@ from view.mesh_plotter.mesh_plots import plot_mesh
 
 
 def smoothing_mean(mesh: Mesh) -> True:
+    """
+    Smoothing function based on the mean of all neighbouring vertices.
+    :param mesh: the mesh tà smooth
+    :return: a smoothed mesh
+    """
     for i in range (20):
         #plot_mesh(mesh)
         for i, n_info in enumerate (mesh.nodes, start=0):

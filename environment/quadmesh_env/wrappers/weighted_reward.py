@@ -44,5 +44,5 @@ class WeightedRewardWrapper(gym.Wrapper):
             self.mesh_weighted_score = self.get_weighted_mesh_score()
             reward = (previous_weighted_mesh_score - self.mesh_weighted_score)*10
         else:
-            reward = -5
+            reward = -10
         return obs, reward, terminated, truncated, info

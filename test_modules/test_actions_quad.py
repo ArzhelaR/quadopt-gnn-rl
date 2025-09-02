@@ -119,7 +119,7 @@ class TestQuadActions(unittest.TestCase):
         q5 = cmap.add_quad(n051, n10, n151, n12)
         cmap.set_twin_pointers()
         ma = QuadMeshTopoAnalysis(cmap)
-        plot_mesh(cmap)
+        plot_mesh(cmap,debug=True)
         found, d = cmap.find_inner_edge(n151, n12)
         self.assertTrue(found)
         self.assertEqual(cleanup_edge(ma, n151, n21), True)

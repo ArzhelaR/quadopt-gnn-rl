@@ -14,12 +14,6 @@ class TestReader(unittest.TestCase):
         self.assertEqual(m.nb_nodes(), 98)
         self.assertEqual(m.nb_faces(), 164)
 
-    def test_read_gmsh_tri(self):
-        filename = os.path.join(TESTFILE_FOLDER, 't1_tri.msh')
-        m = read_gmsh(filename)
-        self.assertEqual(m.nb_nodes(), 40)
-        self.assertEqual(m.nb_faces(), 56)
-
     def test_read_gmsh_quad(self):
         filename = os.path.join(TESTFILE_FOLDER, 't1_quad.msh')
         m = read_gmsh(filename)

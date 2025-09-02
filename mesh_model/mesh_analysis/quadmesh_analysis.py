@@ -99,7 +99,7 @@ class QuadMeshAnalysis(GlobalMeshAnalysis):
 
 class QuadMeshTopoAnalysis(QuadMeshAnalysis):
     """
-    Quadmesh old analysis
+    Quadmesh topological analysis
     """
 
     def __init__(self, mesh: Mesh):
@@ -184,7 +184,7 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             topo = False
             return topo
 
-        # if two faces share two edges
+        # if adjacent faces share two edges
         if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
             topo = False
             return topo
@@ -206,7 +206,8 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             return topo
 
         # if two faces share two edges
-        if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
+        # old criteria : if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
+        if d111.get_beta(2) == d21:
             topo = False
             return topo
 
@@ -228,6 +229,7 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             topo = False
             return topo
 
+        #The final degree of the new node should not exceed 10
         if (n3_analysis.degree() +n1_analysis.degree()-2) > 10:
             topo = False
             return topo
@@ -239,17 +241,26 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         if d12 is not None:
             f2 = d12.get_face()
             adjacent_faces_lst.append(f2.id)
+        else:
+            f2 = None
         d112 = d11.get_beta(2)
         if d112 is not None:
             f3 = d112.get_face()
             adjacent_faces_lst.append(f3.id)
+        else:
+            f3 = None
         d1112 = d111.get_beta(2)
         if d1112 is not None:
             f4 = d1112.get_face()
             adjacent_faces_lst.append(f4.id)
-
+        else:
+            f4 = None
+        if d == d111.get_beta(2):
+            t=0
+            plot_mesh(d.mesh, debug=True)
         # Check that there are no adjacent faces in common
-        if len(adjacent_faces_lst) != len(set(adjacent_faces_lst)):
+        # old criteria : if len(adjacent_faces_lst) != len(set(adjacent_faces_lst)):
+        if f1 == f2 or f3 == f4:
             topo = False
             return topo
 
@@ -303,6 +314,9 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         removable_n_to = self.are_nodes_removables(nodes_to)
 
         if not removable_n_from and not removable_n_to:
+            topo = False
+            return topo, False
+        elif len(set(n.id for n in nodes_from)) != len(set(n.id for n in nodes_to)):
             topo = False
             return topo, False
         else:

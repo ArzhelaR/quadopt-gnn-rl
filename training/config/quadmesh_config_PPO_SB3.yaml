@@ -1,8 +1,8 @@
 project_name : "Quadmesh"
-experiment_name : "wrapper_cleanup_test"
+experiment_name : "full-dataset-obs36-v0"
 description : ""
 
-total_timesteps : 500000
+total_timesteps : 1500000
 
 paths:
   log_dir : "training/results/quad-sb3/"
@@ -12,8 +12,8 @@ paths:
   observation_counts_dir: "training/results/quad-sb3/observation_counts/"
 
 dataset:
-  training_dataset_dir : "training/dataset/QuadMesh/random_simple_quad_5_actions"
-  exploit_dataset_dir : "dataset/test_random_30"
+  training_dataset_dir : "training/dataset/QuadMesh/full_dataset"
+  exploit_dataset_dir : "dataset/QuadMesh/big_test_dataset"
   evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
   training_mesh_file_path : "mesh_files/simple_quad.msh"
 
@@ -22,15 +22,15 @@ seed : 1
 env:
   env_id : "Quadmesh-v0"
   n_vec_envs : 0
-  max_episode_steps : 15
-  n_darts_selected : 7
-  deep : 12
-  obs_size : 84
+  max_episode_steps : 150
+  n_darts_selected : 15
+  deep : 36
+  obs_size : 540
   action_restriction : false
   with_degree_observation : false
   reward_function : 0 # 0 if basics, 1 if penalize, 2 otherwise
-  render_mode : "human"
-  obs_count : true
+  render_mode : null
+  obs_count : false
   analysis_type : "topo"
 
 ppo:
@@ -44,13 +44,13 @@ ppo:
 
 eval:
   eval_env_id : "Quadmesh-v0"
-  max_episode_steps : 10
+  max_episode_steps : 100
   min_evals : 5
   max_no_improvement_evals : 10
   eval_freq : 500
-  n_darts_selected: 10
-  deep: 12
-  obs_size: 120
+  n_darts_selected: 15
+  deep: 36
+  obs_size: 540
   render_mode: "human"
   action_restriction: false
   with_quality_observation: false

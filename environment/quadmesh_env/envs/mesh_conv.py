@@ -5,6 +5,9 @@ from mesh_model.mesh_struct.mesh import Mesh
 
 
 def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricted:bool, nodes_scores: list[int], nodes_adjacency: list[int]):
+    """
+    Get the feature matrix for the observation.
+    """
     mesh = m_analysis.mesh
     if analysis_type == "boundary":
         template, darts_id = get_template_boundary(m_analysis, deep)
@@ -12,8 +15,10 @@ def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricte
         template, darts_id = get_template(m_analysis, deep)
     elif analysis_type == "new":
         template, darts_id = get_template_new(m_analysis, deep)
-    elif analysis_type == "topo":
+    elif analysis_type == "topo": # the last method implemented and the one mainly used
         template, darts_id = get_template(m_analysis, deep)
+    else :
+        raise ValueError("Unknown analysis type")
 
     # if degree:
     #     deep = int(deep / 2)
@@ -21,7 +26,7 @@ def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricte
     # else:
     #     template, darts_id = get_template(m_analysis, deep)
 
-    if restricted:
+    if restricted: # we don't use it anymore
         darts_to_delete = []
         darts_id = []
         for i, d_info in enumerate(mesh.active_darts()):
@@ -68,7 +73,6 @@ def get_template(m_analysis, deep: int):
         template[n_darts - 1, 1] = B.get_score()
         template[n_darts - 1, 2] = C.get_score()
         template[n_darts - 1, 3] = D.get_score()
-
 
         E = [A,B,C,D]
         deep_captured = len(E)
