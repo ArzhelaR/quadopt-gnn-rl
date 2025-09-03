@@ -1,5 +1,5 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs36-v0"
+experiment_name : "TEEEST"
 
 description : ""
 
@@ -11,10 +11,11 @@ paths:
   wandb_model_saving_dir : "training/wandb_models/quad-sb3/"
   episode_recording_dir: "training/results/quad-sb3/episode_recordings/" # Not working
   observation_counts_dir: "training/results/quad-sb3/observation_counts/"
+  parameters_saving_dir : "training/results/quad-sb3/parameters/"
 
 dataset:
-  training_dataset_dir : "training/dataset/QuadMesh/full_dataset"
-  exploit_dataset_dir : "dataset/QuadMesh/big_test_dataset"
+  training_dataset_dir : "training/dataset/training_dataset"
+  exploit_dataset_dir : "dataset/QuadMesh/test_dataset"
   #If datasets directory above are set to None, the agent will either train or be exploited on a single mesh file given below
   training_mesh_file_path : "mesh_files/simple_quad.msh"
   evaluation_mesh_file_path : "mesh_files/simple_quad.msh"

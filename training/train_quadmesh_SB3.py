@@ -4,6 +4,7 @@ import random
 import torch
 import yaml
 import os
+import shutil
 import time
 import wandb
 
@@ -62,14 +63,13 @@ class HParamCallback(BaseCallback):
             "batch_size": config["ppo"]["batch_size"],
             "epochs": config["ppo"]["n_epochs"],
             "clip_range": config["ppo"]["clip_range"],
-            "training_meshes": config["dataset"]["training_mesh_file_path"],
-            "evaluation_meshes": config["dataset"]["evaluation_mesh_file_path"],
+            "training_meshes": config["dataset"]["training_dataset_dir"],
+            "evaluation_mesh": config["dataset"]["exploit_dataset_dir"],
             "max_steps": config["env"]["max_episode_steps"],
             "max_timesteps": config["total_timesteps"],
             "deep": config["env"]["deep"],
             "with_degree": config["env"]["with_degree_observation"],
             "nb_darts_selected": config["env"]["n_darts_selected"],
-            "reward_mode": config["env"]["reward_function"],
 
 
         }
@@ -235,19 +235,23 @@ if __name__ == '__main__':
     with open("training/config/quadmesh_config_PPO_SB3.yaml", "r") as f:
         config = yaml.safe_load(f)
 
-        # TRAINING MESHES
-        training_dataset = read_dataset(config["dataset"]["training_dataset_dir"])
-        training_single_mesh = read_gmsh(config["dataset"]["training_mesh_file_path"])
-
-
-        if training_dataset is not None:
-            learning_meshes = training_dataset
-        elif training_single_mesh is not None:
-            learning_meshes = training_single_mesh
-        else:
-            raise ValueError("Training mesh not found")
-
     experiment_name = config["experiment_name"]
+
+    parameters_dir = os.path.join(config["paths"]["parameters_saving_dir"], experiment_name)
+    os.makedirs(parameters_dir, exist_ok=True)
+    shutil.copy("training/config/quadmesh_config_PPO_SB3.yaml", os.path.join(parameters_dir, experiment_name))
+
+    # TRAINING MESHES
+    training_dataset = read_dataset(config["dataset"]["training_dataset_dir"])
+    training_single_mesh = read_gmsh(config["dataset"]["training_mesh_file_path"])
+
+
+    if training_dataset is not None:
+        learning_meshes = training_dataset
+    elif training_single_mesh is not None:
+        learning_meshes = training_single_mesh
+    else:
+        raise ValueError("Training mesh not found")
 
     # SEEDING
     seed = config["seed"]
@@ -256,13 +260,14 @@ if __name__ == '__main__':
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
-    # # WANDB
-    # run = wandb.init(
-    #     project="Quadmesh-learning",
-    #     name=config["experiment_name"],
-    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    #     save_code=True,  # optional
-    # )
+    # WANDB
+    run = wandb.init(
+        project="Quadmesh-learning",
+        name=config["experiment_name"],
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        save_code=True,  # optional
+        config=config,
+    )
 
     # SAVING MODEL CALLBACK
     save_dir = os.path.join(config["paths"]["policy_saving_dir"], experiment_name)
