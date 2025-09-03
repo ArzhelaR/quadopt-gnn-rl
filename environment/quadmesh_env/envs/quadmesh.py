@@ -61,7 +61,8 @@ class QuadMeshEnv(gym.Env):
             with_degree_obs: bool = True,
             action_restriction: bool = False,
             obs_count: bool = False,
-            analysis_type = "topo"
+            analysis_type = "topo",
+            debug = True
     ) -> None:
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -85,6 +86,7 @@ class QuadMeshEnv(gym.Env):
         self.deep = deep
         self.analysis_type = analysis_type
         self.mesh_analysis = QuadMeshTopoAnalysis(self.mesh)
+        self.debug = debug
         obs_shape = (self.n_darts_selected, self.deep)
 
         #self.mesh_size = len(self.mesh.nodes)
@@ -237,19 +239,19 @@ class QuadMeshEnv(gym.Env):
             n2 = d1.get_node()
             if action[0] == Actions.FLIP_CW.value:
                 self.actions_info["n_flip_cw"] += 1
-                valid_action = flip_edge_cw(self.mesh_analysis, n1, n2)
+                valid_action = flip_edge_cw(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             elif action[0] == Actions.FLIP_CNTCW.value:
                 self.actions_info["n_flip_cntcw"] += 1
-                valid_action= flip_edge_cntcw(self.mesh_analysis, n1, n2)
+                valid_action= flip_edge_cntcw(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             elif action[0] == Actions.SPLIT.value:
                 self.actions_info["n_split"] += 1
-                valid_action= split_edge(self.mesh_analysis, n1, n2)
+                valid_action= split_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             elif action[0] == Actions.COLLAPSE.value:
                 self.actions_info["n_collapse"] += 1
-                valid_action = collapse_edge(self.mesh_analysis, n1, n2)
+                valid_action = collapse_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             elif action[0] == Actions.CLEANUP.value:
                 self.actions_info["n_cleanup"] += 1
-                valid_action = cleanup_edge(self.mesh_analysis, n1, n2)
+                valid_action = cleanup_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             else:
                 raise ValueError("Action not defined")
 

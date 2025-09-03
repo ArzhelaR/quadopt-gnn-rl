@@ -26,7 +26,6 @@ from wandb.integration.sb3 import WandbCallback
 from environment import quadmesh_env
 import mesh_model.random_quadmesh as QM
 from mesh_model.reader import read_gmsh, read_dataset
-from view.mesh_plotter.mesh_plots import dataset_plt
 from training.exploit_SB3_policy import testPolicy
 
 
@@ -275,25 +274,25 @@ if __name__ == '__main__':
         name_prefix=experiment_name
     )
 
-    # EVALUATION CALLBACKS
-
-    # Separate evaluation env
-    eval_env = Monitor(gym.make(
-        config["eval"]["eval_env_id"],
-        learning_mesh = read_gmsh(config["dataset"]["evaluation_mesh_file_path"]),
-        max_episode_steps=config["eval"]["max_episode_steps"],
-        n_darts_selected=config["env"]["n_darts_selected"],
-        deep= config["env"]["deep"],
-        action_restriction=config["env"]["action_restriction"],
-        with_degree_obs=config["env"]["with_degree_observation"],
-        render_mode=config["env"]["render_mode"],
-    ))
-    # Stop training if there is no improvement after more than 3 evaluations
-    stop_train_callback = StopTrainingOnNoModelImprovement(
-        max_no_improvement_evals=config["eval"]["max_no_improvement_evals"],
-        min_evals=config["eval"]["min_evals"],
-        verbose=1)
-    eval_callback = EvalCallback(eval_env, eval_freq=config["eval"]["eval_freq"], callback_after_eval=stop_train_callback, verbose=1)
+    # # EVALUATION CALLBACKS
+    #
+    # # Separate evaluation env
+    # eval_env = Monitor(gym.make(
+    #     config["eval"]["eval_env_id"],
+    #     learning_mesh = read_gmsh(config["dataset"]["evaluation_mesh_file_path"]),
+    #     max_episode_steps=config["eval"]["max_episode_steps"],
+    #     n_darts_selected=config["env"]["n_darts_selected"],
+    #     deep= config["env"]["deep"],
+    #     action_restriction=config["env"]["action_restriction"],
+    #     with_degree_obs=config["env"]["with_degree_observation"],
+    #     render_mode=config["env"]["render_mode"],
+    # ))
+    # # Stop training if there is no improvement after more than 3 evaluations
+    # stop_train_callback = StopTrainingOnNoModelImprovement(
+    #     max_no_improvement_evals=config["eval"]["max_no_improvement_evals"],
+    #     min_evals=config["eval"]["min_evals"],
+    #     verbose=1)
+    # eval_callback = EvalCallback(eval_env, eval_freq=config["eval"]["eval_freq"], callback_after_eval=stop_train_callback, verbose=1)
 
     # Create tensorboard log dir
     log_dir = config["paths"]["log_dir"]
@@ -314,6 +313,7 @@ if __name__ == '__main__':
             with_degree_obs=config["env"]["with_degree_observation"],
             render_mode=config["env"]["render_mode"],
             obs_count=config["env"]["obs_count"],
+            debug=config["env"]["debug"],
         )
         #wrapped_env = CleanupWrapper(env)
     wrapped_env = env
@@ -332,6 +332,7 @@ if __name__ == '__main__':
         tensorboard_log=log_dir
     )
 
+    # Uncomment the line below if we want to train over a known policy, the line above (322) must be commented
     #model = PPO.load("training/policy_saved/quad-sb3/New-dataset-v0.zip", env= wrapped_env)
 
     start_time = time.perf_counter()
