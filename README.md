@@ -55,33 +55,10 @@ For training on quadrangular meshes, you can use an agent with all four actions:
 
 After training, the model is saved as a `.zip` file in the `tune/training/policy_saved/` directory. To evaluate the policy, follow these steps in `tune/training/exploit_SB3_policy.py` :
 
-##### 1. Create a Test Dataset
+##### 1. Configure the environment parameters in the eval section:  
+  `tune/training/config/quadmesh_config_PPO_SB3.yaml`
 
-You can either:
-
-- **Load a specific mesh file and duplicate it**:
-  ```python
-  mesh = read_gmsh("../mesh_files/t1_quad.msh")
-  dataset = [mesh for _ in range(9)]
-  ```
-
-- **Generate a set of random quad meshes**:
-  ```python
-  dataset = [QM.random_mesh() for _ in range(9)]
-  ```
-
-##### 2. Load the Environment Configuration
-
-Make sure to change and load the environment settings before testing:
-
-```python
-with open("../environment/environment_config.json", "r") as f:
-    env_config = json.load(f)
-
-plot_dataset(dataset)
-```
-
-##### 3. Load the Model
+##### 2. Load the Model
 
 Use the `PPO.load()` function and evaluate the policy with your dataset:
 
@@ -89,7 +66,7 @@ Use the `PPO.load()` function and evaluate the policy with your dataset:
 model = PPO.load("policy_saved/name.zip")
 ```
 
-##### 4. Run the script
+##### 3. Run the script
 
 Run the script directly in **PyCharm** (or another IDE that supports graphical output) instead of the terminal.  
 > ❗ If executed in a terminal without GUI support, the plots will not be displayed.
