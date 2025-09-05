@@ -75,6 +75,8 @@ class Dart:
         node_id = self.mesh.dart_info[self.id, 3]
         if node_id == -1:
             raise ValueError("No associated node found")
+        elif self.mesh.nodes[node_id, 2] < -1:
+            raise ValueError("Node deleted")
         return Node(self.mesh, node_id)
 
     def set_node(self, node: Node) -> None:

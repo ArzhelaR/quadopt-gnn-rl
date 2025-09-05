@@ -12,7 +12,7 @@ def plot_mesh(mesh: Mesh, debug=False) -> None:
     :param mesh: a Mesh
     :param debug: debug mode to plot darts ID and nodes ID
     """
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(15, 15))
 
     subplot_mesh(mesh, debug=debug)
     plt.show(block=True)
@@ -66,16 +66,16 @@ def subplot_mesh(mesh: Mesh, debug=False) -> None:
                 pos2 = mid2 +0.2* (centroid - mid2)
                 pos3 = mid3 +0.2* (centroid - mid3)
 
-                plt.text(*pos1, f"{d1.id}", color='blue', fontsize=10, ha='center', va='center')
-                plt.text(*pos2, f"{d2.id}", color='blue', fontsize=10, ha='center', va='center')
-                plt.text(*pos3, f"{d3.id}", color='blue', fontsize=10, ha='center', va='center')
+                plt.text(*pos1, f"{d1.id}", color='blue', fontsize=8, ha='center', va='center')
+                plt.text(*pos2, f"{d2.id}", color='blue', fontsize=8, ha='center', va='center')
+                plt.text(*pos3, f"{d3.id}", color='blue', fontsize=8, ha='center', va='center')
 
         if debug:
             # Plot nodes ID
             n_id =0
             for n_info in mesh.nodes:
                 if n_info[2] >=0:
-                    plt.text(n_info[0] + 0.03, n_info[1] - 0.02, f"{n_id}", fontsize=12, color='red', ha='right', va='top')
+                    plt.text(n_info[0] + 0.03, n_info[1] - 0.02, f"{n_id}", fontsize=10, color='red', ha='right', va='top')
                 n_id+=1
 
     elif quad:
@@ -111,16 +111,16 @@ def subplot_mesh(mesh: Mesh, debug=False) -> None:
                 pos3 = mid3 + 0.2 * (centroid - mid3)
                 pos4 = mid4 + 0.2 * (centroid - mid4)
 
-                plt.text(*pos1, f"{d1.id}", color='blue', fontsize=10, ha='center', va='center')
-                plt.text(*pos2, f"{d2.id}", color='blue', fontsize=10, ha='center', va='center')
-                plt.text(*pos3, f"{d3.id}", color='blue', fontsize=10, ha='center', va='center')
-                plt.text(*pos4, f"{d4.id}", color='blue', fontsize=10, ha='center', va='center')
+                plt.text(*pos1, f"{d1.id}", color='blue', fontsize=8, ha='center', va='center')
+                plt.text(*pos2, f"{d2.id}", color='blue', fontsize=8, ha='center', va='center')
+                plt.text(*pos3, f"{d3.id}", color='blue', fontsize=8, ha='center', va='center')
+                plt.text(*pos4, f"{d4.id}", color='blue', fontsize=8, ha='center', va='center')
         if debug :
             # Plot nodes ID
             n_id = 0
             for n_info in mesh.nodes:
                 if n_info[2] >= 0:
-                    plt.text(n_info[0] + 0.03, n_info[1] - 0.02, f"{n_id}", fontsize=12, color='red', ha='right',
+                    plt.text(n_info[0] + 0.03, n_info[1] - 0.02, f"{n_id}", fontsize=10, color='red', ha='right',
                                  va='top')
                 n_id += 1
     else:

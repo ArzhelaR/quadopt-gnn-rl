@@ -285,9 +285,9 @@ class GlobalMeshAnalysis(ABC):
             # raise ValueError("error beta1")
         return True
 
-    def check_isolated_faces(self) -> bool:
+    def check_faces(self) -> bool:
         """
-        Check if all faces are connected.
+        Check if all faces are connected to others and if they are composed of 4 different nodes.
         :return: True if all checks passed, false if at least one face is isolated
         """
         for f in self.mesh.active_faces():
@@ -301,16 +301,32 @@ class GlobalMeshAnalysis(ABC):
             d1112 = d111.get_beta(2)
             if d2 is None and d12 is None and d112 is None and d1112 is None:
                 return False
+            f_nodes_id = [d.get_node().id, d1.get_node().id, d11.get_node().id, d111.get_node().id]
+            if len(set(f_nodes_id)) != 4:
+                return False
+        return True
+
+    def check_double(self, dart_info) -> bool:
+        n_from_id = dart_info[3]
+        n_to_id = Dart(self.mesh, dart_info[1]).get_node()
+
+        for dart_info_double in self.mesh.active_darts():
+            if dart_info_double[0] != dart_info[0]:
+                n_from_id_double = dart_info_double[3]
+                n_to_id_double = Dart(self.mesh, dart_info_double[1]).get_node()
+                if n_from_id_double == n_from_id and n_to_id_double == n_to_id:
+                    return False
 
         return True
+
 
     def mesh_check(self) -> bool:
         valid = True
         for dart_info in self.mesh.active_darts():
-            valid = self.check_beta2_relation(dart_info) and self.check_beta1_relation(dart_info)
+            valid = self.check_beta2_relation(dart_info) and self.check_beta1_relation(dart_info) # and self.check_double(dart_info)
             if not valid:
                 return valid
-        # If there is more than one face, none of them should be isolated.
+        # Faces must be composed of 4 different nodes. If there is more than one face, none of them should be isolated.
         if len(self.mesh.active_faces()) != 1:
-            valid = self.check_isolated_faces()
+            valid = self.check_faces()
         return valid

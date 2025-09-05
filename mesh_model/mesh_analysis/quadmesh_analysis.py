@@ -162,8 +162,11 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             topo = False
             return topo
 
+        found, d = self.mesh.find_inner_edge(n3, n5)
+        if found:
+            return False
         # if two faces share two edges
-        if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
+        elif d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
             topo = False
             return topo
 
@@ -183,9 +186,11 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         if not n4_analysis.test_degree() or not n6_analysis.test_degree():
             topo = False
             return topo
-
+        found, d = self.mesh.find_inner_edge(n4, n6)
+        if found:
+            return False
         # if adjacent faces share two edges
-        if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
+        elif d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
             topo = False
             return topo
         return topo
@@ -207,7 +212,8 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
 
         # if two faces share two edges
         # old criteria : if d211.get_node() == d111.get_node() or d11.get_node() == d2111.get_node():
-        if d111.get_beta(2) == d21:
+        # old criteria v2 : d111.get_beta(2) == d21
+        if d211.get_node() == d111.get_node():
             topo = False
             return topo
 
@@ -233,6 +239,16 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         if (n3_analysis.degree() +n1_analysis.degree()-2) > 10:
             topo = False
             return topo
+
+        adj_darts = n1_analysis.adjacent_darts()
+
+        for da in adj_darts:
+            if da.get_face() != d.get_face():
+                da1 = da.get_beta(1)
+                da11 = da1.get_beta(1)
+                if da11.get_node() == n3:
+                    #plot_mesh(d.mesh, debug=True)
+                    return False
 
         adjacent_faces_lst = []
         f1 = d2.get_face()
@@ -260,10 +276,12 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             plot_mesh(d.mesh, debug=True)
         # Check that there are no adjacent faces in common
         # old criteria : if len(adjacent_faces_lst) != len(set(adjacent_faces_lst)):
+        # new criteria : if f1 == f2 or f3 == f4
         if f1 == f2 or f3 == f4:
             topo = False
             return topo
-
+        # elif not self.check_double([d.id, d1.id, d2.id, n1.id]):
+        #     return False
         return topo
 
 

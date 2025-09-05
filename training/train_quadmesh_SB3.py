@@ -345,12 +345,12 @@ if __name__ == '__main__':
     model.learn(
         total_timesteps=config["total_timesteps"],
         tb_log_name=config["experiment_name"],
-        callback=[HParamCallback(),TensorboardCallback(model), checkpoint_callback], #  WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"]),
+        callback=[HParamCallback(),TensorboardCallback(model), checkpoint_callback, WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"])], #
         progress_bar=True
     )
     end_time = time.perf_counter()
     print("-----------Learning ended------------")
     print(f"Temps d'apprentissage : {end_time - start_time:.4} s")
     model.save(config["paths"]["policy_saving_dir"]+config["experiment_name"])
-    # run.finish()
+    run.finish()
 

@@ -24,12 +24,16 @@ def flip_edge_cntcw_ids(mesh_analysis, id1: int, id2: int, check_mesh_structure=
 def flip_edge_cntcw(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> True:
     found, d = mesh_analysis.mesh.find_inner_edge(n1, n2)
 
+    if check_mesh_structure:
+        mesh_before = deepcopy(mesh_analysis.mesh)
+
     if found:
         topo = mesh_analysis.isFlipCCWOk(d)
         if not topo:
             return False
     else:
         return False
+
 
     d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh_analysis.mesh.active_quadrangles(d)
 
@@ -69,6 +73,8 @@ def flip_edge_cntcw(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True
     if check_mesh_structure:
         mesh_check = mesh_analysis.mesh_check()
         if not mesh_check:
+            plot_mesh(mesh_before, debug=True)
+            plot_mesh(mesh_analysis.mesh, debug=True)
             raise ValueError("Some checks are missing")
 
     return True
@@ -136,6 +142,7 @@ def split_edge_ids(mesh_analysis, id1: int, id2: int, check_mesh_structure=True)
 def split_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> True:
     if check_mesh_structure:
         mesh_before = deepcopy(mesh_analysis.mesh)
+    mesh_before = deepcopy(mesh_analysis.mesh)
     found, d = mesh_analysis.mesh.find_inner_edge(n1, n2)
 
     if found:
@@ -148,7 +155,9 @@ def split_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
     d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh_analysis.mesh.active_quadrangles(d)
     d1112 = d111.get_beta(2)
     d212 = d21.get_beta(2)
-
+    n4_score = n4.get_score()
+    if d.id == 159 and n4_score == -6.0:
+        plot_mesh(mesh_analysis.mesh, debug=True)
     # create a new node in the middle of [n1, n2]
     N10 = mesh_analysis.mesh.add_node((n1.x() + n2.x()) / 2, (n1.y() + n2.y()) / 2)
 
@@ -174,6 +183,9 @@ def split_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
         if not mesh_check:
             plot_mesh(mesh_before, debug=True)
             plot_mesh(mesh_analysis.mesh, debug=True)
+            d_before = Dart(mesh_before, d.id)
+            ma_before = QuadMeshTopoAnalysis(mesh_before)
+            ma_before.isSplitOk(d_before)
             raise ValueError("Some checks are missing")
 
     return True
@@ -198,6 +210,9 @@ def collapse_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) 
     d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh.active_quadrangles(d)
 
     n1_score = n1.get_score()
+
+    if d.id == 93 and n1_score == -2.0:
+        plot_mesh(mesh, debug=True)
 
     d1112 = d111.get_beta(2)
     d12 = d1.get_beta(2)
@@ -230,13 +245,13 @@ def collapse_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) 
     n_from_analysis = NodeAnalysis(n_from)
     adj_darts = n_from_analysis.adjacent_darts()
 
-    for d in adj_darts:
-        if d.get_node() == n_from:
-            d.set_node(n_to)
+    for da in adj_darts:
+        if da.get_node() == n_from:
+            da.set_node(n_to)
 
     # Change n3 dart association
-    for d in adj_darts:
-        if d.get_node() == n_to:
+    for da in adj_darts:
+        if da.get_node() == n_to:
             n_to.set_dart(d)
             break
 
@@ -263,8 +278,8 @@ def collapse_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) 
     if check_mesh_structure:
         mesh_check = mesh_analysis.mesh_check()
         if not mesh_check:
-            plot_mesh(mesh_before)
-            plot_mesh(mesh_analysis.mesh)
+            plot_mesh(mesh_before, debug=True)
+            plot_mesh(mesh_analysis.mesh, debug=True)
             raise ValueError("Some checks are missing")
     return True
 

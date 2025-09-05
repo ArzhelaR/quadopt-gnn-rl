@@ -1,7 +1,7 @@
 project_name : "Quadmesh"
-experiment_name : "TEEEST"
+experiment_name : "full-dataset-obs4-v0"
 
-description : ""
+description : "Apprentissage avec une observation de taille 4 pour comparer avec celle précédemment réalisée de taille 36 et 12"
 
 total_timesteps : 1500000
 
@@ -25,10 +25,10 @@ seed : 1
 env:
   env_id : "Quadmesh-v0"
   n_vec_envs : 0
-  max_episode_steps : 150
+  max_episode_steps : 75
   n_darts_selected : 15
-  deep : 36
-  obs_size : 540 # It needs to be calculated manually
+  deep : 4
+  obs_size : 60 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   render_mode : null
@@ -49,8 +49,8 @@ eval:
   eval_env_id : "Quadmesh-v0"
   max_episode_steps : 100
   n_darts_selected: 15
-  deep: 36
-  obs_size: 540
+  deep: 12
+  obs_size: 180
   render_mode: "human"
   action_restriction: false
   with_quality_observation: false
