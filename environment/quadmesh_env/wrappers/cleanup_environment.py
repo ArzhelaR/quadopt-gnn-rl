@@ -31,11 +31,10 @@ class CleanupWrapper(gym.Wrapper):
                 self.set_wrapper_attr('mesh_analysis', m_a)
                 self.set_wrapper_attr('mesh', m_a.mesh)
 
-                next_nodes_score, next_mesh_score, mesh_ideal_score, next_nodes_adjacency = m_a.global_score()
+                next_nodes_score, next_mesh_score, mesh_ideal_score = m_a.global_score()
                 terminated = np.array_equal(mesh_ideal_score, next_mesh_score)
                 self.set_wrapper_attr('_nodes_scores', next_nodes_score)
                 self.set_wrapper_attr('_mesh_score', next_mesh_score)
-                self.set_wrapper_attr('_nodes_adjacency', next_nodes_adjacency)
                 unwrapped_env = self.unwrapped
                 obs = unwrapped_env._get_obs()
         else:

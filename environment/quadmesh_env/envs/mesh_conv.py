@@ -4,7 +4,7 @@ from mesh_model.mesh_struct.mesh_elements import Dart
 from mesh_model.mesh_struct.mesh import Mesh
 
 
-def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricted:bool, nodes_scores: list[int], nodes_adjacency: list[int]):
+def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricted:bool, nodes_scores: list[int]):
     """
     Get the feature matrix for the observation.
     """

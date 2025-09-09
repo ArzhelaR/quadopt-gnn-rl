@@ -91,7 +91,7 @@ class QuadMeshEnv(gym.Env):
 
         #self.mesh_size = len(self.mesh.nodes)
         #self.nb_darts = len(self.mesh.dart_info)
-        self._nodes_scores, self._mesh_score, self._ideal_score, self._nodes_adjacency = self.mesh_analysis.global_score()
+        self._nodes_scores, self._mesh_score, self._ideal_score = self.mesh_analysis.global_score()
         self.last_nodes_scores = None
         self._ideal_rewards = (self._mesh_score - self._ideal_score)*10 #arbitrary factor of 10 for rewards
         self.next_mesh_score = 0
@@ -159,7 +159,7 @@ class QuadMeshEnv(gym.Env):
 
         self.mesh_analysis = QuadMeshTopoAnalysis(self.mesh)
 
-        self._nodes_scores, self._mesh_score, self._ideal_score, self._nodes_adjacency = self.mesh_analysis.global_score()
+        self._nodes_scores, self._mesh_score, self._ideal_score = self.mesh_analysis.global_score()
         self.last_nodes_scores = None
         self._ideal_rewards = (self._mesh_score - self._ideal_score) * 10
         self.nb_invalid_actions = 0
@@ -185,7 +185,7 @@ class QuadMeshEnv(gym.Env):
         return self.observation, info
 
     def _get_obs(self):
-        irregularities, darts_list = get_x(self.mesh_analysis, self.n_darts_selected, self.deep, self.analysis_type, self.restricted, self._nodes_scores, self._nodes_adjacency)
+        irregularities, darts_list = get_x(self.mesh_analysis, self.n_darts_selected, self.deep, self.analysis_type, self.restricted, self._nodes_scores)
         self.darts_selected = darts_list
         return irregularities
 
@@ -259,7 +259,7 @@ class QuadMeshEnv(gym.Env):
 
             if valid_action:
                 # An episode is done if the actual score is the same as the ideal
-                next_nodes_score, self.next_mesh_score, _, next_nodes_adjacency = self.mesh_analysis.global_score(mesh_before = mesh_before)
+                next_nodes_score, self.next_mesh_score, _= self.mesh_analysis.global_score(mesh_before = mesh_before)
                 self.last_nodes_scores = self._nodes_scores
                 terminated = np.array_equal(self._ideal_score, self.next_mesh_score)
                 if terminated:
@@ -268,7 +268,7 @@ class QuadMeshEnv(gym.Env):
                 else:
                     mesh_reward = (self._mesh_score - self.next_mesh_score)*10
                     reward = mesh_reward
-                self._nodes_scores, self._mesh_score, self._nodes_adjacency = next_nodes_score, self.next_mesh_score, next_nodes_adjacency
+                self._nodes_scores, self._mesh_score = next_nodes_score, self.next_mesh_score
                 self.observation = self._get_obs()
                 self.nb_invalid_actions = 0
             elif not valid_action:

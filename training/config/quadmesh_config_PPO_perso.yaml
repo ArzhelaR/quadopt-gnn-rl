@@ -1,5 +1,5 @@
 project_name : "Quadmesh"
-experiment_name : "TEST-profile"
+experiment_name : "full_dataset_obs36_perso-v0"
 description : ""
 
 paths:
@@ -19,10 +19,10 @@ seed : 1
 
 env:
   env_id : "Quadmesh-v0"
-  max_episode_steps : 30
-  n_darts_selected : 10
-  deep : 12
-  obs_size : 120 # It needs to be calculated manually
+  max_episode_steps : 75
+  n_darts_selected : 15
+  deep : 36
+  obs_size : 540 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   reward_function : 0 # 0 if basics, 1 if penalize, 2 otherwise
@@ -33,8 +33,8 @@ env:
 
 ppo:
   n_actions : 4
-  n_iterations : 10
-  n_episodes_per_iteration : 50
+  n_iterations : 750
+  n_episodes_per_iteration : 40
   n_epochs : 5
   batch_size: 64
   learning_rate : 0.0001

@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import time
+import os
 import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical
@@ -87,7 +88,7 @@ class Actor(nn.Module):
 
 
 class PPO:
-    def __init__(self, env, obs_size, n_actions, n_darts_observed, max_steps, lr, gamma, nb_iterations, nb_episodes_per_iteration, nb_epochs, batch_size):
+    def __init__(self, env, obs_size, n_actions, n_darts_observed, max_steps, lr, gamma, nb_iterations, nb_episodes_per_iteration, nb_epochs, batch_size, experiment_name, save_dir):
         self.env = env
         self.max_steps = max_steps
         self.n_actions =n_actions
@@ -99,6 +100,9 @@ class PPO:
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.epsilon = 0.2
+        self.experiment_name = experiment_name
+        self.save_dir = save_dir
+        os.makedirs(self.save_dir, exist_ok=True)
 
 
     def train(self, dataset):
@@ -148,6 +152,11 @@ class PPO:
                 print('ITERATION', iteration)
                 rollouts = []
                 dataset = []
+                if iteration % 15 == 0:
+                    filename = os.path.join(self.save_dir, f"{self.experiment_name}_{iteration}.pth")
+                    torch.save(self.actor.state_dict(), filename)
+                    print(f"[Checkpoint] Policy saved at iteration {iteration} -> {filename}")
+
                 for _ in tqdm(range(self.nb_episodes_per_iteration)):
                     next_obs, info = self.env.reset()
                     trajectory = []
