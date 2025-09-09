@@ -175,7 +175,7 @@ class PPO:
                     log_prob = torch.log(pmf[a[0]])
                     next_value = torch.tensor(0.0, dtype=torch.float32) if done else self.critic(next_o)
                     delta = r + 0.9 * next_value - value
-                    _, st, ideal_s, _ = ma.global_score() # Comparaison à l'état s et pas s+1 ?
+                    _, st, ideal_s = ma.global_score() # Comparaison à l'état s et pas s+1 ?
                     if st == ideal_s:
                         continue
                     advantage = 1 if done else G / (st - ideal_s)

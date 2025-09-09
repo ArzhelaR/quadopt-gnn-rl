@@ -107,6 +107,8 @@ if __name__ == '__main__':
         nb_episodes_per_iteration=config["ppo"]["n_episodes_per_iteration"],
         nb_epochs=config["ppo"]["n_epochs"],
         batch_size=config["ppo"]["batch_size"],
+        experiment_name=experiment_name,
+        save_dir=config["paths"]["policy_saving_dir"],
     )
 
     writer = SummaryWriter(log_dir + config["experiment_name"])
@@ -116,13 +118,13 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
     print("-----------Starting learning-----------")
 
-    pr = cProfile.Profile()
-    pr.enable()
+    # pr = cProfile.Profile()
+    # pr.enable()
     actor, rewards, wins, steps, obs_registry = model.learn(writer)
-    pr.disable()
-    stats = pstats.Stats(pr)
-    pr.dump_stats("ppo_learn.prof")
-    stats.sort_stats("cumtime").print_stats(20)
+    # pr.disable()
+    # stats = pstats.Stats(pr)
+    # pr.dump_stats("ppo_learn.prof")
+    # stats.sort_stats("cumtime").print_stats(20)
 
     log_end(writer, config, obs_registry)
 

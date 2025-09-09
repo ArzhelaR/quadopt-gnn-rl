@@ -225,7 +225,6 @@ class TestQuadActions(unittest.TestCase):
         self.assertTrue(Node(cmap, 10).get_dart().id < 0)
 
         plot_mesh(cmap, debug=True)
-        nodes_score, mesh_score, mesh_ideal_score, adjacency = ma.global_score()
 
         self.assertEqual(ma.global_score()[1], 0)
 

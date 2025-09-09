@@ -17,14 +17,14 @@ class TestMeshOldAnalysis(unittest.TestCase):
         faces = [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]]
         cmap = Mesh(nodes,faces)
         qma = QuadMeshTopoAnalysis(cmap)
-        nodes_score, mesh_score, mesh_ideal_score, adjacency = qma.global_score()
+        nodes_score, mesh_score, mesh_ideal_score = qma.global_score()
         self.assertEqual((0,0), (mesh_score, mesh_ideal_score) )
 
     def test_mesh_with_irregularities(self):
         filename = os.path.join(TESTFILE_FOLDER, 't1_quad.msh')
         cmap = read_gmsh(filename)
         qma = QuadMeshTopoAnalysis(cmap)
-        nodes_score, mesh_score, mesh_ideal_score, adjacency = qma.global_score()
+        nodes_score, mesh_score, mesh_ideal_score = qma.global_score()
         self.assertIsNot((0, 0), (mesh_score,mesh_ideal_score) )
 
     def test_is_valid_action(self):

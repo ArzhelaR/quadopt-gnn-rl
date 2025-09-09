@@ -175,7 +175,6 @@ class GlobalMeshAnalysis(ABC):
         mesh_ideal_score = 0
         mesh_score = 0
         nodes_score = []
-        nodes_adjacency = []
         for i in range(len(self.mesh.nodes)):
             if self.mesh.nodes[i, 2] >= 0:
                 n_id = i
@@ -183,13 +182,11 @@ class GlobalMeshAnalysis(ABC):
                 n_a = NodeAnalysis(node)
                 n_score = node.get_score()
                 nodes_score.append(n_score)
-                nodes_adjacency.append(n_a.degree(mesh_before=mesh_before))
                 mesh_ideal_score += n_score
                 mesh_score += abs(n_score)
             else:
                 nodes_score.append(0)
-                nodes_adjacency.append(4)
-        return nodes_score, mesh_score, mesh_ideal_score, nodes_adjacency
+        return nodes_score, mesh_score, mesh_ideal_score
 
     def get_boundary_darts(self) -> list[Dart]:
         """

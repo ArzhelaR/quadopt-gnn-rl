@@ -36,5 +36,5 @@ class MeshDisplay:
         :return: a list of three elements (nodes_score, mesh_score, ideal_mesh_score)
         """
         ma = GlobalMeshAnalysis(self.mesh)
-        nodes_score, mesh_score, ideal_mesh_score, adjacency = ma.global_score()
+        nodes_score, mesh_score, ideal_mesh_score = ma.global_score()
         return [nodes_score, mesh_score, ideal_mesh_score]
