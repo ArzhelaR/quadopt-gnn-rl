@@ -1,9 +1,9 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs36-v1"
+experiment_name : "6-actions-obs36-v1"
 
 description : "Apprentissage avec une observation de taille 36. Nouvelle acontrainte ajoutée"
 
-total_timesteps : 2500000
+total_timesteps : 2000000
 
 paths:
   log_dir : "training/results/quad-sb3/"
@@ -14,11 +14,11 @@ paths:
   parameters_saving_dir : "training/results/quad-sb3/parameters/"
 
 dataset:
-  training_dataset_dir : "training/dataset/training_dataset"
-  exploit_dataset_dir : "dataset/QuadMesh/test_dataset"
+  training_dataset_dir : "../training/dataset/training_dataset"
+  exploit_dataset_dir : "../dataset/QuadMesh/test_dataset"
   #If datasets directory above are set to None, the agent will either train or be exploited on a single mesh file given below
-  training_mesh_file_path : "mesh_files/simple_quad.msh"
-  evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
+  training_mesh_file_path : "../mesh_files/simple_quad.msh"
+  evaluation_mesh_file_path : "../mesh_files/simple_quad.msh"
 
 seed : 1
 
@@ -34,7 +34,7 @@ env:
   render_mode : null
   obs_count : false
   analysis_type : "topo" #only the topo analysis type is working
-  debug : false
+  debug : true
 
 ppo:
   policy : MlpPolicy

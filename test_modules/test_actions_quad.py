@@ -228,7 +228,7 @@ class TestQuadActions(unittest.TestCase):
 
         self.assertEqual(ma.global_score()[1], 0)
 
-    def test_new_cleanup(self):
+    def test_cleanup_boundary(self):
         #Test to cleanup one face on boundary
         cmap = mesh.Mesh()
         n00 = cmap.add_node(0, 0)
@@ -247,7 +247,7 @@ class TestQuadActions(unittest.TestCase):
         plot_mesh(cmap,debug=True)
         found, d = cmap.find_boundary_edge(n12, n02)
         self.assertTrue(found)
-        self.assertEqual(cleanup_edge(ma, n12, n02), True)
+        self.assertEqual(cleanup_boundary_edge(ma, n12, n02), True)
         self.assertEqual(4, cmap.nb_nodes())
         self.assertEqual(1, cmap.nb_faces())
         plot_mesh(cmap)
