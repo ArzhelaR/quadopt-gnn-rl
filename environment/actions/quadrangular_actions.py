@@ -156,8 +156,6 @@ def split_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
     d1112 = d111.get_beta(2)
     d212 = d21.get_beta(2)
     n4_score = n4.get_score()
-    if d.id == 159 and n4_score == -6.0:
-        plot_mesh(mesh_analysis.mesh, debug=True)
     # create a new node in the middle of [n1, n2]
     N10 = mesh_analysis.mesh.add_node((n1.x() + n2.x()) / 2, (n1.y() + n2.y()) / 2)
 
@@ -346,10 +344,10 @@ def cleanup_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -
 
         na_node_to_delete = NodeAnalysis(n_to_delete)
         adj_darts = na_node_to_delete.adjacent_darts()
-        mesh_analysis.mesh.del_node(n_to_delete)
         for da in adj_darts:
             if da.get_node() == n_to_delete:
                 da.set_node(n_to)
+        mesh_analysis.mesh.del_node(n_to_delete)
 
         # update beta 2 relations
         d12 = d1.get_beta(2)
@@ -380,4 +378,159 @@ def cleanup_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -
             raise ValueError("Some checks are missing")
     return True
 
+def cleanup_boundary_edge_ids(mesh_analysis, id1: int, id2: int, check_mesh_structure=True) -> True:
+    return cleanup_edge(mesh_analysis.mesh, Node(mesh_analysis.mesh, id1), Node(mesh_analysis.mesh, id2), check_mesh_structure)
 
+def cleanup_boundary_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> True:
+    mesh = mesh_analysis.mesh
+    if check_mesh_structure:
+        mesh_before = deepcopy(mesh)
+
+    found, d = mesh_analysis.mesh.find_boundary_edge(n1, n2)
+    if found:
+        d_id = d.id
+        valid = mesh_analysis.isCleanupBoundaryOk(d) # delete_n_from is True if n_from cord can be deleted, otherwise False
+        if not valid:
+            return False
+    else:
+        return False
+
+
+    # nfrom nodes correspond to all the parallel nodes to be deleted
+    # nto nodes correspond to all parallel nodes to be merged
+
+    # The two extremities nodes are not retrieved by my method, so we do it first manually
+    parallel_darts = mesh_analysis.mesh.find_parallel_darts(d)
+    last_dart = parallel_darts[-1]
+    ld1 = last_dart.get_beta(1)
+    ld11 = ld1.get_beta(1)
+    ld111 = ld11.get_beta(1)
+    last_node_from = ld111.get_node()
+    last_node_to = ld11.get_node()
+
+    naf = NodeAnalysis(last_node_from)
+    nat = NodeAnalysis(last_node_to)
+    if naf.on_boundary() and last_node_from.get_ideal_adjacency() != 3 and nat.on_boundary() and last_node_to.get_ideal_adjacency() == 3:
+        # We can't delete last node from, but last node to can be deleted
+        na_node_to_delete = nat
+        n_to_delete = last_node_to
+        n_to = last_node_from
+    elif naf.on_boundary() and nat.on_boundary() and last_node_from.get_ideal_adjacency() == 3 and last_node_to.get_ideal_adjacency() != 3:
+        na_node_to_delete = naf
+        n_to_delete = last_node_from
+        n_to = last_node_to
+    else:
+        raise ValueError("No node to delete found")
+    adj_darts = na_node_to_delete.adjacent_darts()
+    for da in adj_darts:
+        if da.get_node() == n_to_delete:
+            da.set_node(n_to)
+    mesh_analysis.mesh.del_node(n_to_delete)
+
+    dp = parallel_darts[-1]
+
+    f = dp.get_face()
+    d1 = dp.get_beta(1)
+    d11 = d1.get_beta(1)
+    d111 = d11.get_beta(1)
+
+    n_from = dp.get_node()
+    n_to = d1.get_node()
+
+    naf = NodeAnalysis(n_from)
+    nat = NodeAnalysis(n_to)
+    if naf.on_boundary() and n_from.get_ideal_adjacency() != 3 and nat.on_boundary() and n_to.get_ideal_adjacency() == 3:
+        # We can't delete last node from, but last node to can be deleted
+        na_node_to_delete = nat
+        n_to_delete = n_to
+        n_to = n_from
+    elif naf.on_boundary() and nat.on_boundary() and n_from.get_ideal_adjacency() == 3 and n_to.get_ideal_adjacency() != 3:
+        na_node_to_delete = naf
+        n_to_delete = n_from
+        n_to = n_to
+    else:
+        raise ValueError("No node to delete found")
+
+    n_del_score = n_to_delete.get_score()  # for later calculation
+    n_to_score = n_to.get_score()
+
+    adj_darts = na_node_to_delete.adjacent_darts()
+    for da in adj_darts:
+        if da.get_node() == n_to_delete:
+            da.set_node(n_to)
+
+    mesh_analysis.mesh.del_node(n_to_delete)
+
+    # update beta 2 relations
+    d12 = d1.get_beta(2)
+    d1112 = d111.get_beta(2)
+    if d1112 is not None:
+        d1112.set_beta(2, d12)
+    if d12 is not None:
+        d12.set_beta(2, d1112)
+
+    mesh_analysis.mesh.del_quad(dp, d1, d11, d111, f)
+
+    # Update score
+    na_nto = NodeAnalysis(n_to)
+    if na_nto.on_boundary():
+        n_to.set_score(n_to_score + n_del_score - 2)
+    else:
+        n_to.set_score(n_to_score + n_del_score - 4)
+
+    if check_mesh_structure:
+        mesh_check = mesh_analysis.mesh_check()
+        if not mesh_check:
+            plot_mesh(mesh_before, debug=True)
+            plot_mesh(mesh_analysis.mesh, debug=True)
+            mesh_check = mesh_analysis.mesh_check()
+            d_test = Dart(mesh_before, d_id)
+            ma_before = QuadMeshTopoAnalysis(mesh_before)
+            ma_before.isCleanupOk(d_test)
+            raise ValueError("Some checks are missing")
+    return True
+
+def fuse_faces(mesh_analysis, id1: int, id2: int, check_mesh_structure=True) -> True:
+    return fuse_faces(mesh_analysis, Node(mesh_analysis.mesh, id1), Node(mesh_analysis.mesh, id2), check_mesh_structure)
+
+
+def fuse_faces(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> True:
+    mesh = mesh_analysis.mesh
+    if check_mesh_structure:
+        mesh_before = deepcopy(mesh)
+    found, d = mesh.find_inner_edge(n1, n2)
+    if found:
+        topo = mesh_analysis.isFuseOk(d)
+        if not topo:
+            return False
+    else:
+        return False
+
+    d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh.active_quadrangles(d)
+
+    f = d.get_face()
+    f_to_delete = d2.get_face()
+
+    f.set_dart(d111)
+
+    d211.set_beta(1, d11)
+    d111.set_beta(1, d21)
+    d21.set_face(f)
+    d211.set_face(f)
+
+    if n3.get_dart() == d2111:
+        n3.set_dart(d11)
+    if n1.get_dart() == d:
+        n1.set_dart(d2)
+
+    mesh.del_quad(d,d1,d2,d2111,f_to_delete)
+
+    mesh.del_node(n2)
+
+    if check_mesh_structure:
+        mesh_check = mesh_analysis.mesh_check()
+        if not mesh_check:
+            plot_mesh(mesh_before, debug=True)
+            plot_mesh(mesh_analysis.mesh, debug=True)
+            raise ValueError("Some checks are missing")
+    return True

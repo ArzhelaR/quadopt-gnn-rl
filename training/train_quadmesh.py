@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import cProfile, pstats
+
 import random
 import torch
 import yaml
@@ -15,9 +17,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 #Internal import
 from environment import quadmesh_env
-from mesh_model.reader import read_gmsh
+from mesh_model.reader import read_gmsh, read_dataset
 
-from model_RL.PPO_model_pers import PPO
+from model_RL.PPO_MeshingO import PPO
 
 
 def log_init(log_writer, config):
@@ -58,7 +60,7 @@ if __name__ == '__main__':
         config = yaml.safe_load(f)
 
     experiment_name = config["experiment_name"]
-
+    learning_meshes = read_dataset(config["dataset"]["training_dataset_dir"])
     # Create log dir
     log_dir = config["paths"]["log_dir"]
     os.makedirs(log_dir, exist_ok=True)
@@ -82,7 +84,7 @@ if __name__ == '__main__':
     # Create the environment
     env = gym.make(
         config["env"]["env_id"],
-        # mesh=read_gmsh(config["dataset"]["evaluation_mesh_file_path"]),
+        learning_mesh=learning_meshes,
         max_episode_steps=config["env"]["max_episode_steps"],
         n_darts_selected=config["env"]["n_darts_selected"],
         deep=config["env"]["deep"],
@@ -90,6 +92,7 @@ if __name__ == '__main__':
         with_degree_obs=config["env"]["with_degree_observation"],
         render_mode=config["env"]["render_mode"],
         obs_count=config["env"]["obs_count"],
+        debug=config["env"]["debug"],
     )
 
     model = PPO(
@@ -113,7 +116,13 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
     print("-----------Starting learning-----------")
 
+    pr = cProfile.Profile()
+    pr.enable()
     actor, rewards, wins, steps, obs_registry = model.learn(writer)
+    pr.disable()
+    stats = pstats.Stats(pr)
+    pr.dump_stats("ppo_learn.prof")
+    stats.sort_stats("cumtime").print_stats(20)
 
     log_end(writer, config, obs_registry)
 

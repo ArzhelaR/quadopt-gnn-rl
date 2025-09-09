@@ -193,6 +193,8 @@ class QuadMeshEnv(gym.Env):
         return {
             "distance": self._mesh_score - self._ideal_score,
             "mesh_reward" : mesh_reward,
+            "mesh_score" : self._mesh_score,
+            "mesh_ideal_score" : self._ideal_score,
             "mesh_ideal_rewards" : self._ideal_rewards,
             "is_success": 1.0 if terminated else 0.0,
             "valid_action": 1.0 if valid_action else 0.0,

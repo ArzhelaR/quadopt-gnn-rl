@@ -12,7 +12,7 @@ def plot_mesh(mesh: Mesh, debug=False) -> None:
     :param mesh: a Mesh
     :param debug: debug mode to plot darts ID and nodes ID
     """
-    fig, ax = plt.subplots(figsize=(15, 15))
+    fig, ax = plt.subplots(figsize=(10, 10))
 
     subplot_mesh(mesh, debug=debug)
     plt.show(block=True)

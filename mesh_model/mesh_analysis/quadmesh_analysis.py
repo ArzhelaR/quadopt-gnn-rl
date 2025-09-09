@@ -308,6 +308,7 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
 
             nodes_from.append(n_from)
             nodes_to.append(n_to)
+            #If the 'feuillet' intersects itself, the face ID will already be present.
             if f.id not in faces:
                 faces.append(f.id)
             else:
@@ -340,6 +341,22 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         else:
             return topo, removable_n_from
 
+    def isCleanupBoundaryOk(self, d: Dart) -> bool:
+
+        if d.get_beta(2) is not None:
+            return False
+
+        d1 = d.get_beta(1)
+        d11 = d1.get_beta(1)
+        d111 = d11.get_beta(1)
+
+        if d11.get_beta(2) is not None:
+            return False
+        elif d1.get_beta(2) is not None and d111.get_beta(2) is not None:
+            return False
+        else:
+            return True
+
     def are_nodes_removables(self, nodes_from):
         if len(nodes_from) != len(set(n.id for n in nodes_from)):
             return False
@@ -355,3 +372,92 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             if self.isValidAction(d_id, 4):
                 return False
         return True
+
+    def isFuseOk(self, d: Dart) -> bool:
+
+        if d.get_beta(2) is None:
+            return False
+        else:
+            d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = self.mesh.active_quadrangles(d)
+
+        if d1.get_beta(2)== d2111:
+            return True
+        else:
+            return False
+
+
+""" 
+OLD IS CLEANUP OK WITH BOUNDARY MODIF
+"""
+
+#
+# def isCleanupBoundaryOk(self, d: Dart) -> bool:
+#     if d.get_beta(2) is not None:
+#         return False
+#
+#     mesh = d.mesh
+#     parallel_darts = mesh.find_parallel_darts(d)
+#     faces = []
+#     nodes_from = []
+#     nodes_to = []
+#     for dp in parallel_darts:
+#         f = dp.get_face()
+#         n_from = dp.get_node()
+#         n_to = (dp.get_beta(1)).get_node()
+#         # If the dart is not a boundary dart but the two nodes are on boundary we can't cleanup
+#         if dp.get_beta(2) is not None:
+#             na_from = NodeAnalysis(n_from)
+#             na_to = NodeAnalysis(n_to)
+#             if na_from.on_boundary() and na_to.on_boundary():
+#                 return False, False
+#
+#         nodes_from.append(n_from)
+#         nodes_to.append(n_to)
+#         # If the 'feuillet' intersects itself, the face ID will already be present.
+#         if f.id not in faces:
+#             faces.append(f.id)
+#         else:
+#             topo = False
+#             return topo, False
+#         d111 = ((dp.get_beta(1)).get_beta(1)).get_beta(1)
+#         if d111.get_beta(2) is None:
+#             topo = False
+#             return topo, False
+#
+#     # The last dart lies on the boundary, so it's not included in the list of parallel darts.
+#     # As a result, its associated nodes were not retrieved automatically, so we handle them manually here.
+#     last_dart = parallel_darts[-1]
+#     ld1 = last_dart.get_beta(1)
+#     ld11 = ld1.get_beta(1)
+#     ld111 = ld11.get_beta(1)
+#     last_node_from = ld111.get_node()
+#     last_node_to = ld11.get_node()
+#     nodes_from.append(last_node_from)
+#     nodes_to.append(last_node_to)
+#     removable_n_from = self.are_nodes_removables(nodes_from)
+#     removable_n_to = self.are_nodes_removables(nodes_to)
+#
+#     if len(nodes_from) == 2 and len(nodes_to) == 2:
+#         if len(faces) == 1:
+#             on_boundary = True
+#             for nf in nodes_from:
+#                 naf = NodeAnalysis(nf)
+#                 if not naf.on_boundary():
+#                     on_boundary = False
+#                     break
+#             for nt in nodes_from:
+#                 nat = NodeAnalysis(nt)
+#                 if not nat.on_boundary():
+#                     on_boundary = False
+#                     break
+#             if on_boundary:
+#                 return True, True
+#
+#     if not removable_n_from and not removable_n_to:
+#         topo = False
+#         return topo, False
+#     elif len(set(n.id for n in nodes_from)) != len(set(n.id for n in nodes_to)):
+#         topo = False
+#         return topo, False
+#     else:
+#         return topo, removable_n_from

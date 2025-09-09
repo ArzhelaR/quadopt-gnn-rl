@@ -4,7 +4,8 @@ import mesh_model.mesh_struct.mesh as mesh
 from mesh_model.mesh_struct.mesh_elements import Dart, Node
 from mesh_model.random_quadmesh import random_mesh
 from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
-from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, cleanup_edge
+from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, \
+    cleanup_edge, fuse_faces, cleanup_boundary_edge
 from view.mesh_plotter.mesh_plots import plot_mesh
 from mesh_model.reader import read_gmsh
 
@@ -153,34 +154,6 @@ class TestQuadActions(unittest.TestCase):
         plot_mesh(mesh)
 
 
-    def test_split_collapse_split(self):
-        nodes = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
-        faces = [[0, 1, 2], [0, 2, 3]]
-        cmap = mesh.Mesh(nodes, faces)
-        ma = QuadMeshTopoAnalysis(cmap)
-        n0 = Node(cmap, 0)
-        n1 = Node(cmap, 1)
-        n2 = Node(cmap, 2)
-        n3 = Node(cmap, 3)
-        split_edge(ma, n0, n2)
-        n4 = Node(cmap, 4)
-        collapse_edge(ma, n0, n4)
-        split_edge(ma, n0, n2)
-        n5 = Node(cmap, 5)
-        collapse_edge(ma, n0, n5)
-        split_edge(ma, n4, n2)
-        collapse_edge(ma, n4, n5)
-        collapse_edge(ma, n2, n4)
-        split_edge(ma, n0, n2)
-        split_edge(ma, n0, n4)
-        split_edge(ma, n4, n3)
-        split_edge(ma, n4, n1)
-        split_edge(ma, n5, n1)
-        n7 = Node(cmap, 7)
-        n8 = Node(cmap, 8)
-        collapse_edge(ma, n7, n8)
-        collapse_edge(ma, n5, n7)
-
     def test_simple_mesh(self):
         filename = os.path.join(TESTFILE_FOLDER, 'simple_quad.msh')
         cmap = read_gmsh(filename)
@@ -255,6 +228,77 @@ class TestQuadActions(unittest.TestCase):
         nodes_score, mesh_score, mesh_ideal_score, adjacency = ma.global_score()
 
         self.assertEqual(ma.global_score()[1], 0)
+
+    def test_new_cleanup(self):
+        #Test to cleanup one face on boundary
+        cmap = mesh.Mesh()
+        n00 = cmap.add_node(0, 0)
+        n02= cmap.add_node(0, 2)
+
+        n20 = cmap.add_node(2, 0)
+        n21 = cmap.add_node(2, 1)
+        n22 = cmap.add_node(2, 2)
+
+        n12 = cmap.add_node(1, 2)
+
+        q1 = cmap.add_quad(n00, n20, n21, n02)
+        q2 = cmap.add_quad(n02, n21, n22, n12)
+        cmap.set_twin_pointers()
+        ma = QuadMeshTopoAnalysis(cmap)
+        plot_mesh(cmap,debug=True)
+        found, d = cmap.find_boundary_edge(n12, n02)
+        self.assertTrue(found)
+        self.assertEqual(cleanup_edge(ma, n12, n02), True)
+        self.assertEqual(4, cmap.nb_nodes())
+        self.assertEqual(1, cmap.nb_faces())
+        plot_mesh(cmap)
+
+    def test_L_confi(self):
+        cmap = mesh.Mesh()
+        n00 = cmap.add_node(0, 0)
+        n02= cmap.add_node(0, 2)
+        n04= cmap.add_node(0, 4)
+
+        n20 = cmap.add_node(2, 0)
+        n40 = cmap.add_node(4, 0)
+        n41 = cmap.add_node(4, 1)
+        n42 = cmap.add_node(4, 2)
+
+        n22 = cmap.add_node(2, 2)
+        n23 = cmap.add_node(2, 3)
+        n24 = cmap.add_node(2, 4)
+
+        n14 = cmap.add_node(1, 4)
+
+        n32= cmap.add_node(3, 2)
+        n12 = cmap.add_node(1, 2)
+        n13 = cmap.add_node(1, 3)
+
+        q1 = cmap.add_quad(n22, n41, n42, n32)
+        q2 = cmap.add_quad(n22, n20, n40, n41)
+        q3 = cmap.add_quad(n00, n20, n22, n12)
+        q4 = cmap.add_quad(n02, n00, n12, n13)
+        q5 = cmap.add_quad(n12, n22, n23, n13)
+        q6 = cmap.add_quad(n04, n02, n13, n14)
+        q7 = cmap.add_quad(n14, n13, n23, n24)
+
+        cmap.set_twin_pointers()
+        ma = QuadMeshTopoAnalysis(cmap)
+        plot_mesh(cmap, debug=True)
+
+        self.assertTrue(cleanup_boundary_edge(ma, n32, n22))
+        plot_mesh(cmap, debug=True)
+        self.assertTrue(flip_edge_cw(ma, n12, n00))
+        plot_mesh(cmap, debug=True)
+        self.assertTrue(fuse_faces(ma, n13, n12))
+        plot_mesh(cmap, debug=True)
+        self.assertTrue(flip_edge_cw(ma, n13, n02))
+        plot_mesh(cmap, debug=True)
+        self.assertTrue(fuse_faces(ma, n14, n13))
+        plot_mesh(cmap, debug=True)
+        self.assertFalse(cleanup_boundary_edge(ma, n04, n02))
+        self.assertTrue(cleanup_boundary_edge(ma, n14, n04))
+        plot_mesh(cmap, debug=True)
 
 
 if __name__ == '__main__':

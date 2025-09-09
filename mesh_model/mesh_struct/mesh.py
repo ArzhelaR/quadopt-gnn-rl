@@ -252,6 +252,24 @@ class Mesh:
                     return True, d2
         return False, None
 
+    def find_boundary_edge(self, n1: Node, n2: Node) -> (bool, Dart):
+        """
+        Try and find the edge connecting n1 and n2. If the edge does
+        not exist, or is on the mesh boundary, it returns False. Else
+        it returns True and the dart coming from n1 and pointing to n2
+        :param n1: First node
+        :param n2: Second node
+        :return: the inner dart connecting n1 to n2 if it exists
+        """
+        for d_info in self.active_darts():
+            d = Dart(self, d_info[0])
+            d1 = Dart(self, d_info[1])
+            d2 = d.get_beta(2)
+            if d2 is None:
+                if d.get_node().id == n1.id and d1.get_node().id == n2.id:
+                    return True, d
+        return False, None
+
     def set_face_beta2(self, f: Face, darts: list[Dart]) -> None:
         """
         Set beta2 relation between darts and face darts when possible
