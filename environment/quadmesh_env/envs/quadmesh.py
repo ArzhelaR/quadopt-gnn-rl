@@ -233,6 +233,7 @@ class QuadMeshEnv(gym.Env):
     def step(self, action: np.ndarray):
         mesh_before = deepcopy(self.mesh)
         self.ep_len+=1
+        truncated = False
 
         if self.observation_count:
             self.observation_registry.register_observation(self.observation)
@@ -283,23 +284,22 @@ class QuadMeshEnv(gym.Env):
                 self._nodes_scores, self._mesh_score = next_nodes_score, self.next_mesh_score
                 self.observation = self._get_obs()
                 self.nb_invalid_actions = 0
+
             elif not valid_action:
                 reward = -5
                 mesh_reward = 0
                 terminated = False
                 self.nb_invalid_actions += 1
+                if self.nb_invalid_actions > 10:
+                    truncated = self.mesh_analysis.isTruncated(self.darts_selected)
             else:
                 raise ValueError("Invalid action")
-        if self.nb_invalid_actions > 10 :
-            truncated = self.mesh_analysis.isTruncated(self.darts_selected)
-        else:
-            truncated = False
 
         info = self._get_info(terminated, valid_action, action, mesh_reward)
 
         if self.render_mode == "human":
             self._render_frame()
-        if terminated or self.ep_len>= self.max_steps:
+        if terminated or self.ep_len>= 200:
             if self.recording and self.frames:
                 imageio.mimsave(f"episode_recordings/episode_{self.episode_count}.gif", self.frames, fps=1)
                 print("Image recorded")
@@ -367,7 +367,7 @@ class QuadMeshEnv(gym.Env):
                 self.window.blit(text_surface, (x, y_start + i * line_spacing))
 
         self.clock.tick(60)
-        pygame.time.delay(1200)
+        pygame.time.delay(600)
         pygame.display.flip()
         if self.recording:
             pixels = pygame.surfarray.array3d(pygame.display.get_surface())

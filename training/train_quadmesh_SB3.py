@@ -109,11 +109,13 @@ class TensorboardCallback(BaseCallback):
             "nb_flip_cntcw": 0,
             "nb_split": 0,
             "nb_collapse": 0,
-            "nb_cleanup": 0,
+            "nb_cleanup_bdy": 0,
+            "nb_fuse": 0,
             "nb_invalid_flip": 0,
             "nb_invalid_split": 0,
             "nb_invalid_collapse": 0,
-            "nb_invalid_cleanup": 0,
+            "nb_invalid_cleanup_bdy": 0,
+            "nb_invalid_fuse": 0,
         }
         self.final_distance = 0
         self.normalized_return = 0
@@ -133,11 +135,13 @@ class TensorboardCallback(BaseCallback):
         self.actions_info["nb_flip_cntcw"] += self.locals["infos"][0].get("flip_cntcw", 0.0)
         self.actions_info["nb_split"] += self.locals["infos"][0].get("split", 0.0)
         self.actions_info["nb_collapse"] += self.locals["infos"][0].get("collapse", 0.0)
-        self.actions_info["nb_cleanup"] += self.locals["infos"][0].get("cleanup", 0.0)
+        self.actions_info["nb_cleanup_bdy"] += self.locals["infos"][0].get("cleanup_bdy", 0.0)
+        self.actions_info["nb_fuse"] += self.locals["infos"][0].get("fuse", 0.0)
         self.actions_info["nb_invalid_flip"] += self.locals["infos"][0].get("invalid_flip", 0.0)
         self.actions_info["nb_invalid_split"] += self.locals["infos"][0].get("invalid_split", 0.0)
         self.actions_info["nb_invalid_collapse"] += self.locals["infos"][0].get("invalid_collapse", 0.0)
-        self.actions_info["nb_invalid_cleanup"] += self.locals["infos"][0].get("invalid_cleanup", 0.0)
+        self.actions_info["nb_invalid_cleanup_bdy"] += self.locals["infos"][0].get("invalid_cleanup_bdy", 0.0)
+        self.actions_info["nb_invalid_fuse"] += self.locals["infos"][0].get("invalid_fuse", 0.0)
 
         self.mesh_reward += self.locals["infos"][0].get("mesh_reward", 0.0)
 
@@ -159,11 +163,15 @@ class TensorboardCallback(BaseCallback):
             self.logger.record("actions/nb_flip_cntcw", self.actions_info["nb_flip_cntcw"])
             self.logger.record("actions/nb_split", self.actions_info["nb_split"])
             self.logger.record("actions/nb_collapse", self.actions_info["nb_collapse"])
-            self.logger.record("actions/nb_cleanup", self.actions_info["nb_cleanup"])
+            self.logger.record("actions/nb_cleanup_bdy", self.actions_info["nb_cleanup_bdy"])
+            self.logger.record("actions/nb_fuse", self.actions_info["nb_cleanup_bdy"])
             self.logger.record("actions/invalid_flip", self.actions_info["nb_invalid_flip"]*100/(self.actions_info["nb_flip_cw"]+self.actions_info["nb_flip_cntcw"]) if (self.actions_info["nb_flip_cw"]+self.actions_info["nb_flip_cntcw"]) > 0 else 0)
             self.logger.record("actions/invalid_split", self.actions_info["nb_invalid_split"]*100/self.actions_info["nb_split"] if self.actions_info["nb_split"] > 0 else 0)
             self.logger.record("actions/invalid_collapse", self.actions_info["nb_invalid_collapse"]*100/self.actions_info["nb_collapse"]if self.actions_info["nb_collapse"] > 0 else 0)
-            self.logger.record("actions/invalid_cleanup", self.actions_info["nb_invalid_cleanup"]*100/self.actions_info["nb_cleanup"]if self.actions_info["nb_cleanup"] > 0 else 0)
+            self.logger.record("actions/invalid_cleanup_bdy", self.actions_info["nb_invalid_cleanup_bdy"]*100/self.actions_info["nb_cleanup_bdy"]if self.actions_info["nb_cleanup_bdy"] > 0 else 0)
+            self.logger.record("actions/invalid_fuse",
+                               self.actions_info["nb_invalid_fuse"] * 100 / self.actions_info[
+                                   "nb_fuse"] if self.actions_info["nb_fuse"] > 0 else 0)
             self.logger.record("episode_mesh_reward", self.mesh_reward)
             self.logger.record("episode_reward", self.current_episode_reward)
             self.logger.record("normalized_return", self.normalized_return)
@@ -232,14 +240,14 @@ class TensorboardCallback(BaseCallback):
 if __name__ == '__main__':
 
     # PARAMETERS CONFIGURATION
-    with open("../training/config/quadmesh_config_PPO_SB3.yaml", "r") as f:
+    with open("training/config/quadmesh_config_PPO_SB3.yaml", "r") as f:
         config = yaml.safe_load(f)
 
     experiment_name = config["experiment_name"]
 
     parameters_dir = os.path.join(config["paths"]["parameters_saving_dir"], experiment_name)
     os.makedirs(parameters_dir, exist_ok=True)
-    shutil.copy("../training/config/quadmesh_config_PPO_SB3.yaml", os.path.join(parameters_dir, experiment_name))
+    shutil.copy("training/config/quadmesh_config_PPO_SB3.yaml", os.path.join(parameters_dir, experiment_name))
 
     # TRAINING MESHES
     training_dataset = read_dataset(config["dataset"]["training_dataset_dir"])

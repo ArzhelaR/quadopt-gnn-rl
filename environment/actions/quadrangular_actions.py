@@ -395,7 +395,6 @@ def cleanup_boundary_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structur
     else:
         return False
 
-    plot_mesh(mesh_before, debug=True)
     d1 = d.get_beta(1)
     d11 = d1.get_beta(1)
     d111 = d11.get_beta(1)
@@ -486,7 +485,7 @@ def fuse_faces(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
         return False
 
     d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh.active_quadrangles(d)
-    plot_mesh(mesh_before, debug=True)
+    #plot_mesh(mesh_before, debug=True)
     f = d.get_face()
     f_to_delete = d2.get_face()
 
