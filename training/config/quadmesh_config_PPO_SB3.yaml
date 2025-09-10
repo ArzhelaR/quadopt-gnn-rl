@@ -1,9 +1,9 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs36-v1"
+experiment_name : "full-dataset-obs108-v1"
 
-description : "Apprentissage avec une observation de taille 36. Nouvelle acontrainte ajoutée"
+description : "Apprentissage avec une observation de taille 108. Après optimisation de l'environnement. "
 
-total_timesteps : 2500000
+total_timesteps : 3500000
 
 paths:
   log_dir : "training/results/quad-sb3/"
@@ -27,8 +27,8 @@ env:
   n_vec_envs : 0
   max_episode_steps : 75
   n_darts_selected : 15
-  deep : 36
-  obs_size : 540 # It needs to be calculated manually
+  deep : 108
+  obs_size : 1620 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   render_mode : null
