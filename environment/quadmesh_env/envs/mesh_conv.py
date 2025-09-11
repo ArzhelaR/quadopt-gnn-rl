@@ -98,6 +98,9 @@ def get_template(m_analysis, deep: int):
                     template[n_darts - 1, len(E)-1] = N2.get_score()
                 else:
                     E.extend([None,None])
+                    F.append(None)
+                    F.append(None)
+                    F.append(None)
                     #template[n_darts - 1, len(E) - 1] = -500 # dummy vertices are assigned to -500
                     #template[n_darts - 1, len(E) - 2] = -500 # dummy vertices are assigned to -500
 

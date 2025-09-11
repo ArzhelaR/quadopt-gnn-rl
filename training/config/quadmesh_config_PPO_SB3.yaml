@@ -1,7 +1,7 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs108-v1"
+experiment_name : "full-dataset-obs36-step150-v0"
 
-description : "Apprentissage avec une observation de taille 108. Après optimisation de l'environnement. "
+description : "Apprentissage avec une observation de taille 36. Après optimisation de l'environnement. Nouvelle observatin avec dummy vertices et pas de temps augmenté à 150  "
 
 total_timesteps : 3500000
 
@@ -25,10 +25,10 @@ seed : 1
 env:
   env_id : "Quadmesh-v0"
   n_vec_envs : 0
-  max_episode_steps : 75
+  max_episode_steps : 150
   n_darts_selected : 15
-  deep : 108
-  obs_size : 1620 # It needs to be calculated manually
+  deep : 36
+  obs_size : 540 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   render_mode : null
