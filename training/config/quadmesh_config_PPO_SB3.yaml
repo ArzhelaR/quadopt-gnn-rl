@@ -1,9 +1,9 @@
 project_name : "Quadmesh"
-experiment_name : "6-actions-obs36-v1"
+experiment_name : "6-actions-obs36-mixed2-v1"
 
-description : "Apprentissage avec une observation de taille 36. Nouvelle acontrainte ajoutée"
+description : "Apprentissage avec une observation de taille 36. Dataset mixte v2"
 
-total_timesteps : 2000000
+total_timesteps : 10000000
 
 paths:
   log_dir : "training/results/quad-sb3/"
@@ -40,14 +40,14 @@ ppo:
   policy : MlpPolicy
   n_steps : 2048
   n_epochs : 5
-  batch_size: 64
+  batch_size: 128
   learning_rate : 0.0001
-  gamma : 0.9
+  gamma : 0.99
   clip_range : 0.2
 
 eval:
   eval_env_id : "Quadmesh-v0"
-  max_episode_steps : 200
+  max_episode_steps : 150
   n_darts_selected: 15
   deep: 36
   obs_size: 540

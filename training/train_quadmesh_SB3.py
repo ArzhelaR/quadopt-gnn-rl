@@ -30,7 +30,7 @@ from mesh_model.reader import read_gmsh, read_dataset
 from training.exploit_SB3_policy import testPolicy
 
 
-def make_env(config, training_mesh):
+def make_env(config, learning_meshes):
     """
     Function to create gym environment for vectorize learning.
     :param config: configuration yaml file
@@ -40,12 +40,15 @@ def make_env(config, training_mesh):
     def _init():
         return gym.make(
             config["env"]["env_id"],
-            mesh=training_mesh,
+            learning_mesh=learning_meshes,
             max_episode_steps=config["env"]["max_episode_steps"],
             n_darts_selected=config["env"]["n_darts_selected"],
             deep=config["env"]["deep"],
             action_restriction=config["env"]["action_restriction"],
             with_degree_obs=config["env"]["with_degree_observation"],
+            render_mode=config["env"]["render_mode"],
+            obs_count=config["env"]["obs_count"],
+            debug=config["env"]["debug"],
         )
     return _init
 
@@ -328,9 +331,9 @@ if __name__ == '__main__':
             obs_count=config["env"]["obs_count"],
             debug=config["env"]["debug"],
         )
+        check_env(env, warn=True)
         #wrapped_env = CleanupWrapper(env)
     wrapped_env = env
-    check_env(env, warn=True)
 
 
     model = PPO(

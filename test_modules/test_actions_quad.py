@@ -6,6 +6,7 @@ from mesh_model.random_quadmesh import random_mesh
 from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
 from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, \
     cleanup_edge, fuse_faces, cleanup_boundary_edge
+from mesh_model.writer import write_json
 from view.mesh_plotter.mesh_plots import plot_mesh
 from mesh_model.reader import read_gmsh
 
@@ -284,6 +285,8 @@ class TestQuadActions(unittest.TestCase):
         cmap.set_twin_pointers()
         ma = QuadMeshTopoAnalysis(cmap)
         plot_mesh(cmap, debug=True)
+
+        write_json("L_config.json", cmap)
 
         self.assertTrue(cleanup_boundary_edge(ma, n32, n22))
         plot_mesh(cmap, debug=True)

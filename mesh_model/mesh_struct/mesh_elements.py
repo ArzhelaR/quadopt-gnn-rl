@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 class Dart:
     _mesh_type: type = None
 

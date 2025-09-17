@@ -1,9 +1,9 @@
 import pandas as pd
 
-df = pd.read_csv("full_dataset_obs36_perso-v0.csv")
+df = pd.read_csv("validity_obs108.csv")
 
 if 'Value' in df.columns:
-    alpha =0.1
+    alpha =0.05
     df["Smoothed"]=df["Value"].ewm(alpha=alpha, adjust=False).mean()
 
-    df.to_csv("full_dataset_obs36_perso-v0.csv",index=False)
+    df.to_csv("validity_obs108.csv",index=False)
