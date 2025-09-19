@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from mesh_model.mesh_struct.mesh_elements import Dart, Node, Face
 from mesh_model.mesh_struct.mesh import Mesh
-from view.mesh_plotter.mesh_plots import plot_mesh
+#from view.mesh_plotter.mesh_plots import plot_mesh
 
 
 class NodeAnalysis:

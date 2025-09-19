@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+
+from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
 from mesh_model.mesh_struct.mesh_elements import Dart
 from mesh_model.mesh_struct.mesh import Mesh
 import numpy as np
@@ -6,19 +8,21 @@ import numpy as np
 from mesh_model.reader import read_gmsh
 
 
-def plot_mesh(mesh: Mesh, debug=False) -> None:
+def plot_mesh(mesh: Mesh, debug=False, scores=False) -> None:
     """
     Plot a mesh using matplotlib
     :param mesh: a Mesh
     :param debug: debug mode to plot darts ID and nodes ID
     """
-    fig, ax = plt.subplots(figsize=(10, 10))
-
-    subplot_mesh(mesh, debug=debug)
+    if scores:
+        fig, ax = plt.subplots(figsize=(10, 11))
+    else:
+        fig, ax = plt.subplots(figsize=(10, 10))
+    subplot_mesh(mesh, debug=debug, scores=True)
     plt.show(block=True)
 
 
-def subplot_mesh(mesh: Mesh, debug=False) -> None:
+def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False) -> None:
     """
     Plot a mesh using matplotlib for subplots with many meshes
     :param mesh: a Mesh
@@ -130,6 +134,14 @@ def subplot_mesh(mesh: Mesh, debug=False) -> None:
     plt.plot(nodes[:, 0], nodes[:, 1], 'ro')  # 'ro' pour des points rouges
     plt.grid(False)
     plt.axis('off')
+    if scores:
+        if quad:
+            ma = QuadMeshTopoAnalysis(mesh)
+            _, score, ideal_score = ma.global_score()
+            if id is not None:
+                plt.title(f"Mesh {id} \n s: {score:.0f} - s*: {ideal_score:.0f}", fontsize=25, pad=10)
+            else:
+                plt.title(f"s: {score:.0f} - s*: {ideal_score:.0f}", fontsize=25, pad=10)
 
 
 def plot_dataset(dataset: list[Mesh]) -> None:
@@ -145,10 +157,10 @@ def plot_dataset(dataset: list[Mesh]) -> None:
     else:
         nb_lines = round(sqrt_mesh)
         nb_columns = int(sqrt_mesh) +1
-    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(20,20))
+    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(22,24))
     for i, mesh in enumerate(dataset, 1):
         plt.subplot(nb_lines, nb_columns, i)
-        subplot_mesh(mesh)
+        subplot_mesh(mesh, id=i, scores=True)
         #plt.title('Mesh {}'.format(i))
     plt.tight_layout()
     plt.show()
