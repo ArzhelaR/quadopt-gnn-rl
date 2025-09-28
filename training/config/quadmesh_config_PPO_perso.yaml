@@ -1,13 +1,13 @@
 project_name : "Quadmesh"
-experiment_name : "full_dataset_obs36_perso-v0"
+experiment_name : "full_dataset_obs36_5darts_perso-v0"
 description : ""
 
 paths:
-  log_dir : "training/results/quad-perso/"
-  policy_saving_dir : "training/policy_saved/quad-perso/"
-  wandb_model_saving_dir : "training/wandb_models/quad-perso/"
-  episode_recording_dir: "training/results/quad-perso/episode_recording/"
-  observation_counts_dir: "training/results/quad-perso/observation_counts/"
+  log_dir : "training/results/e2/"
+  policy_saving_dir : "training/policy_saved/e2/"
+  wandb_model_saving_dir : "training/wandb_models/e2/"
+  episode_recording_dir: "training/results/e2/episode_recording/"
+  observation_counts_dir: "training/results/e2/observation_counts/"
 
 dataset:
   training_dataset_dir: "training/dataset/training_dataset"
@@ -20,9 +20,9 @@ seed : 1
 env:
   env_id : "Quadmesh-v0"
   max_episode_steps : 75
-  n_darts_selected : 15
+  n_darts_selected : 5
   deep : 36
-  obs_size : 540 # It needs to be calculated manually
+  obs_size : 180 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   reward_function : 0 # 0 if basics, 1 if penalize, 2 otherwise
@@ -33,8 +33,8 @@ env:
 
 ppo:
   n_actions : 4
-  n_iterations : 750
-  n_episodes_per_iteration : 40
+  n_iterations : 30000
+  n_episodes_per_iteration : 30
   n_epochs : 5
   batch_size: 64
   learning_rate : 0.0001

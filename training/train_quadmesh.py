@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # pr.dump_stats("ppo_learn.prof")
     # stats.sort_stats("cumtime").print_stats(20)
 
-    log_end(writer, config, obs_registry)
+    #log_end(writer, config, obs_registry)
 
     end_time = time.perf_counter()
     print("-----------Learning ended------------")

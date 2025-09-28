@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
-from mesh_model.mesh_struct.mesh_elements import Dart
+from mesh_model.mesh_struct.mesh_elements import Dart, Node
 from mesh_model.mesh_struct.mesh import Mesh
 import numpy as np
 
@@ -18,11 +18,12 @@ def plot_mesh(mesh: Mesh, debug=False, scores=False) -> None:
         fig, ax = plt.subplots(figsize=(10, 11))
     else:
         fig, ax = plt.subplots(figsize=(10, 10))
-    subplot_mesh(mesh, debug=debug, scores=True)
+    subplot_mesh(mesh, debug=debug, scores=False)
+    plt.savefig("figure_paper.png", dpi=300, bbox_inches="tight", pad_inches=0)
     plt.show(block=True)
 
 
-def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False) -> None:
+def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=False) -> None:
     """
     Plot a mesh using matplotlib for subplots with many meshes
     :param mesh: a Mesh
@@ -93,7 +94,7 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False) -> None:
             n3 = d3.get_node()
             n4 = d4.get_node()
             polygon = np.array([(n1.x(), n1.y()), (n2.x(), n2.y()), (n3.x(), n3.y()), (n4.x(), n4.y()), (n1.x(), n1.y())])
-            plt.plot(polygon[:, 0], polygon[:, 1], 'k-')
+            plt.plot(polygon[:, 0], polygon[:, 1], 'k-', zorder=1)
 
             if debug:
                 #Plot darts ID
@@ -127,11 +128,44 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False) -> None:
                     plt.text(n_info[0] + 0.03, n_info[1] - 0.02, f"{n_id}", fontsize=10, color='red', ha='right',
                                  va='top')
                 n_id += 1
+        if irregularities:
+            n_id = 0
+            for n_info in mesh.nodes:
+                n = Node(mesh, n_id)
+                s = -1*n.get_score()
+                teal = "#008080"
+                salmon = "#FA8072"
+                green_pastel = "#77DD77"
+                if s > 0:
+                    color = teal
+                    radius = 0.15
+                    show_text = True
+                elif s < 0:
+                    color = salmon
+                    radius = 0.15
+                    show_text = True
+                else:  # s == 0
+                    color = green_pastel
+                    radius = 0.05  # plus petit
+                    show_text = False
+
+                # Dessiner le cercle
+                circle = plt.Circle((n_info[0], n_info[1]), radius=radius,
+                                    color=color, zorder=2)
+                plt.gca().add_patch(circle)
+
+                # Ajouter le texte si nécessaire
+                if show_text:
+                    plt.text(n_info[0], n_info[1], f"{s:.0f}", fontsize=14,
+                             color="white", ha="center", va="center", zorder=3)
+
+                n_id += 1
     else:
         raise NotImplementedError
-
+    teal = "#008080"
     # Tracer les sommets
-    plt.plot(nodes[:, 0], nodes[:, 1], 'ro')  # 'ro' pour des points rouges
+    if not irregularities:
+        plt.plot(nodes[:, 0], nodes[:, 1], 'o', color='teal')  # 'ro' pour des points rouges
     plt.grid(False)
     plt.axis('off')
     if scores:
@@ -155,12 +189,12 @@ def plot_dataset(dataset: list[Mesh]) -> None:
         nb_lines = int(sqrt_mesh)
         nb_columns = int(sqrt_mesh)
     else:
-        nb_lines = round(sqrt_mesh)
-        nb_columns = int(sqrt_mesh) +1
-    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(22,24))
+        nb_lines = round(sqrt_mesh)+1
+        nb_columns = int(sqrt_mesh)
+    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(22,17))
     for i, mesh in enumerate(dataset, 1):
-        plt.subplot(nb_lines, nb_columns, i)
-        subplot_mesh(mesh, id=i, scores=True)
+        plt.subplot(4, 5, i)
+        subplot_mesh(mesh, id=i-1, scores=True)
         #plt.title('Mesh {}'.format(i))
     plt.tight_layout()
     plt.show()

@@ -104,7 +104,6 @@ class PPO:
         self.save_dir = save_dir
         os.makedirs(self.save_dir, exist_ok=True)
 
-
     def train(self, dataset):
         num_samples = len(dataset)
         print('training on {}'.format(num_samples))
@@ -152,7 +151,7 @@ class PPO:
                 print('ITERATION', iteration)
                 rollouts = []
                 dataset = []
-                if iteration % 15 == 0:
+                if iteration % 50 == 0:
                     filename = os.path.join(self.save_dir, f"{self.experiment_name}_{iteration}.pth")
                     torch.save(self.actor.state_dict(), filename)
                     print(f"[Checkpoint] Policy saved at iteration {iteration} -> {filename}")
@@ -164,6 +163,16 @@ class PPO:
                     ep_mesh_reward = 0
                     ep_valid_actions = 0
                     ideal_reward = info["mesh_ideal_rewards"]
+                    actions_info = {
+                        "nb_flip_cw": 0,
+                        "nb_flip_cntcw": 0,
+                        "nb_split": 0,
+                        "nb_collapse": 0,
+                        "nb_invalid_flip": 0,
+                        "nb_invalid_split": 0,
+                        "nb_invalid_collapse": 0,
+                    }
+                    final_distance = 0
                     done = False
                     step = 0
                     while step < self.max_steps:
@@ -174,12 +183,17 @@ class PPO:
                             wins.append(0)
                             break
                         gym_action = [action[2],int(action[0]/self.n_actions)]
-                        t0 = time.time()
                         next_obs, reward, terminated, truncated, info = self.env.step(gym_action)
-                        t = time.time() - t0
                         ep_reward += reward
                         ep_mesh_reward += info["mesh_reward"]
                         ep_valid_actions += info["valid_action"]
+                        actions_info["nb_flip_cw"] += info["flip_cw"]
+                        actions_info["nb_flip_cntcw"] += info["flip_cntcw"]
+                        actions_info["nb_split"] += info["split"]
+                        actions_info["nb_collapse"] += info["collapse"]
+                        actions_info["nb_invalid_flip"] += info["invalid_flip"]
+                        actions_info["nb_invalid_split"] += info["invalid_split"]
+                        actions_info["nb_invalid_collapse"] += info["invalid_collapse"]
                         st = info["mesh_score"]
                         s_ideal = info["mesh_ideal_score"]
                         if terminated:
@@ -188,6 +202,7 @@ class PPO:
                                 trajectory.append((ma, obs, action, reward, prob, next_obs, done, st, s_ideal))
                             else:
                                 wins.append(1)
+                                writer.add_scalar("episode_success", 1, nb_episodes+1)
                                 done = True
                                 trajectory.append((ma, obs, action, reward, prob, next_obs, done, st, s_ideal))
                             break
@@ -209,13 +224,31 @@ class PPO:
                     nb_episodes += 1
                     writer.add_scalar("episode_reward", ep_reward, nb_episodes)
                     writer.add_scalar("episode_mesh_reward", ep_mesh_reward, nb_episodes)
+                    writer.add_scalar("final_distance", info["distance"], nb_episodes)
                     if ideal_reward !=0 :
-                        writer.add_scalar("normalized return", (ep_mesh_reward/ideal_reward), nb_episodes)
+                        writer.add_scalar("normalized_return", (ep_mesh_reward/ideal_reward), nb_episodes)
                     else :
-                        writer.add_scalar("normalized return", ep_mesh_reward, nb_episodes)
+                        writer.add_scalar("normalized_return", ep_mesh_reward, nb_episodes)
                     if len(trajectory) != 0:
-                        writer.add_scalar("len_episodes", len(trajectory), nb_episodes)
+                        writer.add_scalar("episode_length", len(trajectory), nb_episodes)
                         writer.add_scalar("valid_actions", ep_valid_actions*100/len(trajectory), nb_episodes)
+                    #Actions info recording
+                    writer.add_scalar("actions/nb_flip_cw", actions_info["nb_flip_cw"], nb_episodes)
+                    writer.add_scalar("actions/nb_flip_cntcw", actions_info["nb_flip_cntcw"], nb_episodes)
+                    writer.add_scalar("actions/nb_split", actions_info["nb_split"], nb_episodes)
+                    writer.add_scalar("actions/nb_collapse", actions_info["nb_collapse"], nb_episodes)
+                    if (actions_info["nb_flip_cw"] + actions_info["nb_flip_cntcw"]) > 0:
+                        writer.add_scalar("actions/invalid_flip", actions_info["nb_invalid_flip"]*100/(actions_info["nb_flip_cw"]+actions_info["nb_flip_cntcw"]), nb_episodes)
+                    else:
+                        writer.add_scalar("actions/invalid_flip", 0, nb_episodes)
+                    if actions_info["nb_split"]> 0:
+                        writer.add_scalar("actions/invalid_split", actions_info["nb_invalid_split"]*100/actions_info["nb_split"], nb_episodes)
+                    else:
+                        writer.add_scalar("actions/invalid_split", 0, nb_episodes)
+                    if actions_info["nb_collapse"] > 0:
+                        writer.add_scalar("actions/invalid_collapse", actions_info["nb_invalid_collapse"]*100/actions_info["nb_collapse"], nb_episodes)
+                    else:
+                        writer.add_scalar("actions/invalid_collapse", 0, nb_episodes)
 
                 self.train(dataset)
 

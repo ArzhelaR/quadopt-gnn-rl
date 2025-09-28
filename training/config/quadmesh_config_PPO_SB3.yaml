@@ -1,21 +1,21 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs36-step150-v0"
+experiment_name : "full-dataset-obs36-10darts-v0"
 
 description : "Apprentissage avec une observation de taille 36. Après optimisation de l'environnement. Nouvelle observatin avec dummy vertices et pas de temps augmenté à 150  "
 
-total_timesteps : 3500000
+total_timesteps : 500000
 
 paths:
-  log_dir : "training/results/quad-sb3/"
-  policy_saving_dir : "training/policy_saved/quad-sb3/"
-  wandb_model_saving_dir : "training/wandb_models/quad-sb3/"
-  episode_recording_dir: "training/results/quad-sb3/episode_recordings/" # Not working
-  observation_counts_dir: "training/results/quad-sb3/observation_counts/"
-  parameters_saving_dir : "training/results/quad-sb3/parameters/"
+  log_dir : "training/results/e1/"
+  policy_saving_dir : "training/policy_saved/e1/"
+  wandb_model_saving_dir : "training/wandb_models/e1/"
+  episode_recording_dir: "training/results/e1/episode_recordings/" # Not working
+  observation_counts_dir: "training/results/e1/observation_counts/"
+  parameters_saving_dir : "training/results/e1/parameters/"
 
 dataset:
   training_dataset_dir : "training/dataset/training_dataset"
-  exploit_dataset_dir : "dataset/QuadMesh/test_dataset"
+  exploit_dataset_dir : "dataset/test_dataset"
   #If datasets directory above are set to None, the agent will either train or be exploited on a single mesh file given below
   training_mesh_file_path : "mesh_files/simple_quad.msh"
   evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
@@ -25,10 +25,10 @@ seed : 1
 env:
   env_id : "Quadmesh-v0"
   n_vec_envs : 0
-  max_episode_steps : 150
-  n_darts_selected : 15
+  max_episode_steps : 75
+  n_darts_selected : 10
   deep : 36
-  obs_size : 540 # It needs to be calculated manually
+  obs_size : 360 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   render_mode : null
@@ -47,11 +47,11 @@ ppo:
 
 eval:
   eval_env_id : "Quadmesh-v0"
-  max_episode_steps : 100
-  n_darts_selected: 15
-  deep: 12
+  max_episode_steps : 300
+  n_darts_selected: 5
+  deep: 36
   obs_size: 180
-  render_mode: "human"
+  render_mode: null #"human"
   action_restriction: false
   with_quality_observation: false
   # The three parameters below are not used anymore
