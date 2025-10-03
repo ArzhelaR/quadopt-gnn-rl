@@ -40,6 +40,16 @@ ppo:
   learning_rate : 0.0001
   gamma : 0.9
 
+eval:
+  eval_env_id : "Quadmesh-v0"
+  max_episode_steps : 300
+  n_darts_selected: 5
+  deep: 36
+  obs_size: 180
+  render_mode: null #"human"
+  action_restriction: false
+  with_quality_observation: false
+
 metrics:
   normalized_return: 0
   ep_len_mean: 0

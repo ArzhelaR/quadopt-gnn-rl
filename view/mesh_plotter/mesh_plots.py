@@ -15,12 +15,21 @@ def plot_mesh(mesh: Mesh, debug=False, scores=False) -> None:
     :param debug: debug mode to plot darts ID and nodes ID
     """
     if scores:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    else:
+        fig, ax = plt.subplots(figsize=(10, 10))
+    subplot_mesh(mesh, debug=debug, scores=scores)
+    plt.tight_layout()
+    plt.savefig("bunny.png", dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.show(block=True)
+
+def save_mesh_plot(mesh: Mesh, filename: str, debug=False, scores=True) -> None:
+    if scores:
         fig, ax = plt.subplots(figsize=(10, 11))
     else:
         fig, ax = plt.subplots(figsize=(10, 10))
-    subplot_mesh(mesh, debug=debug, scores=False)
-    plt.savefig("figure_paper.png", dpi=300, bbox_inches="tight", pad_inches=0)
-    plt.show(block=True)
+    subplot_mesh(mesh, debug=debug, scores=scores)
+    plt.savefig(filename, dpi=300, bbox_inches="tight", pad_inches=0)
 
 
 def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=False) -> None:
@@ -95,6 +104,7 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=
             n4 = d4.get_node()
             polygon = np.array([(n1.x(), n1.y()), (n2.x(), n2.y()), (n3.x(), n3.y()), (n4.x(), n4.y()), (n1.x(), n1.y())])
             plt.plot(polygon[:, 0], polygon[:, 1], 'k-', zorder=1)
+            # plt.fill(polygon[:, 0], polygon[:, 1], facecolor="#B2DFDB", edgecolor="k", zorder=1)
 
             if debug:
                 #Plot darts ID
@@ -138,15 +148,15 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=
                 green_pastel = "#77DD77"
                 if s > 0:
                     color = teal
-                    radius = 0.15
+                    radius = 0.25
                     show_text = True
                 elif s < 0:
                     color = salmon
-                    radius = 0.15
+                    radius = 0.25
                     show_text = True
                 else:  # s == 0
                     color = green_pastel
-                    radius = 0.05  # plus petit
+                    radius = 0.1  # plus petit
                     show_text = False
 
                 # Dessiner le cercle
@@ -156,7 +166,7 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=
 
                 # Ajouter le texte si nécessaire
                 if show_text:
-                    plt.text(n_info[0], n_info[1], f"{s:.0f}", fontsize=14,
+                    plt.text(n_info[0], n_info[1], f"{s:.0f}", fontsize=17,
                              color="white", ha="center", va="center", zorder=3)
 
                 n_id += 1
@@ -175,7 +185,7 @@ def subplot_mesh(mesh: Mesh, debug=False, id=None, scores=False, irregularities=
             if id is not None:
                 plt.title(f"Mesh {id} \n s: {score:.0f} - s*: {ideal_score:.0f}", fontsize=25, pad=10)
             else:
-                plt.title(f"s: {score:.0f} - s*: {ideal_score:.0f}", fontsize=25, pad=10)
+                plt.title(f"s: {score:.0f} - s*: {ideal_score:.0f}", fontsize=30, pad=10)
 
 
 def plot_dataset(dataset: list[Mesh]) -> None:
@@ -189,15 +199,39 @@ def plot_dataset(dataset: list[Mesh]) -> None:
         nb_lines = int(sqrt_mesh)
         nb_columns = int(sqrt_mesh)
     else:
-        nb_lines = round(sqrt_mesh)+1
-        nb_columns = int(sqrt_mesh)
-    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(22,17))
+        nb_lines = round(sqrt_mesh)
+        nb_columns = int(sqrt_mesh)+1
+    _, _ = plt.subplots(nb_lines, nb_columns, figsize=(20,22)) # 20,22 ou 27,15
     for i, mesh in enumerate(dataset, 1):
-        plt.subplot(4, 5, i)
+        plt.subplot(nb_lines, nb_columns, i)
         subplot_mesh(mesh, id=i-1, scores=True)
         #plt.title('Mesh {}'.format(i))
     plt.tight_layout()
     plt.show()
+
+def save_dataset_plot(dataset: list[Mesh], filename: str) -> None:
+    """
+    Plot all the meshes of a dataset with subplot.
+    :param dataset: a list with all the meshes
+    :param filename: the name of the file
+    """
+    nb_mesh = len(dataset)
+    if nb_mesh == 1:
+        save_mesh_plot(dataset[0], filename, scores=True)
+    else:
+        sqrt_mesh = np.sqrt(nb_mesh)
+        if float(sqrt_mesh).is_integer():
+            nb_lines = int(sqrt_mesh)
+            nb_columns = int(sqrt_mesh)
+        else:
+            nb_lines = round(sqrt_mesh)
+            nb_columns = int(sqrt_mesh)+1
+        _, _ = plt.subplots(nb_lines, nb_columns, figsize=(20,22)) # 20,22 ou 27, 15
+        for i, mesh in enumerate(dataset, 1):
+            plt.subplot(nb_lines, nb_columns, i)
+            subplot_mesh(mesh, id=i-1, scores=True)
+        plt.tight_layout()
+        plt.savefig(filename, dpi=300, bbox_inches="tight", pad_inches=0)
 
 
 def dataset_plt(dataset: list[Mesh]):

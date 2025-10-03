@@ -15,7 +15,7 @@ paths:
 
 dataset:
   training_dataset_dir : "training/dataset/training_dataset"
-  exploit_dataset_dir : "dataset/test_dataset"
+  exploit_dataset_dir : "training/dataset/test_dataset"
   #If datasets directory above are set to None, the agent will either train or be exploited on a single mesh file given below
   training_mesh_file_path : "mesh_files/simple_quad.msh"
   evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
