@@ -6,6 +6,7 @@ from mesh_model.random_quadmesh import random_mesh
 from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
 from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, \
     cleanup_edge, fuse_faces, cleanup_boundary_edge
+from mesh_model.writer import write_json
 from view.mesh_plotter.mesh_plots import plot_mesh
 from mesh_model.reader import read_gmsh
 
@@ -228,7 +229,7 @@ class TestQuadActions(unittest.TestCase):
 
         self.assertEqual(ma.global_score()[1], 0)
 
-    def test_new_cleanup(self):
+    def test_cleanup_boundary(self):
         #Test to cleanup one face on boundary
         cmap = mesh.Mesh()
         n00 = cmap.add_node(0, 0)
@@ -247,7 +248,7 @@ class TestQuadActions(unittest.TestCase):
         plot_mesh(cmap,debug=True)
         found, d = cmap.find_boundary_edge(n12, n02)
         self.assertTrue(found)
-        self.assertEqual(cleanup_edge(ma, n12, n02), True)
+        self.assertEqual(cleanup_boundary_edge(ma, n12, n02), True)
         self.assertEqual(4, cmap.nb_nodes())
         self.assertEqual(1, cmap.nb_faces())
         plot_mesh(cmap)
@@ -284,6 +285,8 @@ class TestQuadActions(unittest.TestCase):
         cmap.set_twin_pointers()
         ma = QuadMeshTopoAnalysis(cmap)
         plot_mesh(cmap, debug=True)
+
+        write_json("L_config.json", cmap)
 
         self.assertTrue(cleanup_boundary_edge(ma, n32, n22))
         plot_mesh(cmap, debug=True)

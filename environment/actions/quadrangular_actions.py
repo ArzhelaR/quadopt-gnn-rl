@@ -395,88 +395,65 @@ def cleanup_boundary_edge(mesh_analysis, n1: Node, n2: Node, check_mesh_structur
     else:
         return False
 
-
-    # nfrom nodes correspond to all the parallel nodes to be deleted
-    # nto nodes correspond to all parallel nodes to be merged
-
-    # The two extremities nodes are not retrieved by my method, so we do it first manually
-    parallel_darts = mesh_analysis.mesh.find_parallel_darts(d)
-    last_dart = parallel_darts[-1]
-    ld1 = last_dart.get_beta(1)
-    ld11 = ld1.get_beta(1)
-    ld111 = ld11.get_beta(1)
-    last_node_from = ld111.get_node()
-    last_node_to = ld11.get_node()
-
-    naf = NodeAnalysis(last_node_from)
-    nat = NodeAnalysis(last_node_to)
-    if naf.on_boundary() and last_node_from.get_ideal_adjacency() != 3 and nat.on_boundary() and last_node_to.get_ideal_adjacency() == 3:
-        # We can't delete last node from, but last node to can be deleted
-        na_node_to_delete = nat
-        n_to_delete = last_node_to
-        n_to = last_node_from
-    elif naf.on_boundary() and nat.on_boundary() and last_node_from.get_ideal_adjacency() == 3 and last_node_to.get_ideal_adjacency() != 3:
-        na_node_to_delete = naf
-        n_to_delete = last_node_from
-        n_to = last_node_to
-    else:
-        raise ValueError("No node to delete found")
-    adj_darts = na_node_to_delete.adjacent_darts()
-    for da in adj_darts:
-        if da.get_node() == n_to_delete:
-            da.set_node(n_to)
-    mesh_analysis.mesh.del_node(n_to_delete)
-
-    dp = parallel_darts[-1]
-
-    f = dp.get_face()
-    d1 = dp.get_beta(1)
+    d1 = d.get_beta(1)
     d11 = d1.get_beta(1)
     d111 = d11.get_beta(1)
-
-    n_from = dp.get_node()
-    n_to = d1.get_node()
-
-    naf = NodeAnalysis(n_from)
-    nat = NodeAnalysis(n_to)
-    if naf.on_boundary() and n_from.get_ideal_adjacency() != 3 and nat.on_boundary() and n_to.get_ideal_adjacency() == 3:
-        # We can't delete last node from, but last node to can be deleted
-        na_node_to_delete = nat
-        n_to_delete = n_to
-        n_to = n_from
-    elif naf.on_boundary() and nat.on_boundary() and n_from.get_ideal_adjacency() == 3 and n_to.get_ideal_adjacency() != 3:
-        na_node_to_delete = naf
-        n_to_delete = n_from
-        n_to = n_to
-    else:
-        raise ValueError("No node to delete found")
-
-    n_del_score = n_to_delete.get_score()  # for later calculation
-    n_to_score = n_to.get_score()
-
-    adj_darts = na_node_to_delete.adjacent_darts()
-    for da in adj_darts:
-        if da.get_node() == n_to_delete:
-            da.set_node(n_to)
-
-    mesh_analysis.mesh.del_node(n_to_delete)
-
-    # update beta 2 relations
     d12 = d1.get_beta(2)
     d1112 = d111.get_beta(2)
-    if d1112 is not None:
-        d1112.set_beta(2, d12)
-    if d12 is not None:
-        d12.set_beta(2, d1112)
 
-    mesh_analysis.mesh.del_quad(dp, d1, d11, d111, f)
+    n1 = d.get_node()
+    n2 = d1.get_node()
+    n3 = d11.get_node()
+    n4 = d111.get_node()
 
-    # Update score
-    na_nto = NodeAnalysis(n_to)
-    if na_nto.on_boundary():
-        n_to.set_score(n_to_score + n_del_score - 2)
+    if d12 is None:
+        if n1.get_ideal_adjacency() !=3:
+            n_to_move = n1
+            n_to_move_to = n2
+            n_to_delete = n3
+            n_no_change = n4
+        else:
+            n_to_move = n4
+            n_to_move_to = n3
+            n_to_delete = n2
+            n_no_change = n1
+        d2_to = d1112
+    elif d1112 is None:
+        if n1.get_ideal_adjacency() != 3:
+            n_to_move_to = n1
+            n_to_move = n2
+            n_to_delete = n4
+            n_no_change = n3
+        else:
+            n_to_move_to = n4
+            n_to_move = n3
+            n_to_delete = n1
+            n_no_change = n2
+        d2_to = d12
     else:
-        n_to.set_score(n_to_score + n_del_score - 4)
+        raise ValueError("Some checks are missing")
+
+    n_move_analysis = NodeAnalysis(n_to_move)
+    adj_darts = n_move_analysis.adjacent_darts()
+    n_nc_score = n_no_change.get_score()
+    n_move_score = n_to_move.get_score()
+
+    if d2_to.get_node() == n_to_move:
+        n_to_move_to.set_dart(d2_to)
+    else:
+        n_to_move_to.set_dart(d2_to.get_beta(1))
+
+    for da in adj_darts:
+        if da.get_node() == n_to_move:
+            da.set_node(n_to_move_to)
+
+    d2_to.set_beta(2, None)
+    mesh_analysis.mesh.del_node(n_to_move)
+    mesh_analysis.mesh.del_node(n_to_delete)
+    mesh_analysis.mesh.del_quad(d, d1, d11, d111, d.get_face())
+
+    n_no_change.set_score(n_nc_score - 1)
+    n_to_move_to.set_score(n_move_score - 1)
 
     if check_mesh_structure:
         mesh_check = mesh_analysis.mesh_check()
@@ -498,6 +475,7 @@ def fuse_faces(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
     mesh = mesh_analysis.mesh
     if check_mesh_structure:
         mesh_before = deepcopy(mesh)
+
     found, d = mesh.find_inner_edge(n1, n2)
     if found:
         topo = mesh_analysis.isFuseOk(d)
@@ -507,7 +485,7 @@ def fuse_faces(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
         return False
 
     d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = mesh.active_quadrangles(d)
-
+    #plot_mesh(mesh_before, debug=True)
     f = d.get_face()
     f_to_delete = d2.get_face()
 
@@ -534,3 +512,111 @@ def fuse_faces(mesh_analysis, n1: Node, n2: Node, check_mesh_structure=True) -> 
             plot_mesh(mesh_analysis.mesh, debug=True)
             raise ValueError("Some checks are missing")
     return True
+
+
+
+"""
+Old cleanup
+"""
+
+# nodes_d = [d.get_node(), d1.get_node()]  # [node_from, node_to]
+# nodes_d11p = [d111.get_node(), d11.get_node()]  # [node_from, node_to]
+#
+# na_df = NodeAnalysis(nodes_d[0])
+# na_dt = NodeAnalysis(nodes_d[1])
+#
+# if nodes_d[0].get_ideal_adjacency() == 3:
+#     d_node_to_remove = nodes_d[0]
+#     d_node_to = nodes_d[1]
+# elif nodes_d[1].get_ideal_adjacency() == 3:
+#     d_node_to_remove = nodes_d[1]
+#     d_node_to = nodes_d[0]
+#
+# if nodes_d11p[0].get_ideal_adjacency() == 3:
+#     d11p_node_to_remove = nodes_d11p[0]
+#     d11p_node_to = nodes_d11p[1]
+# elif nodes_d11p[1].get_ideal_adjacency() == 3:
+#     d11p_node_to_remove = nodes_d11p[1]
+#     d11p_node_to = nodes_d11p[0]
+#
+# # nfrom nodes correspond to all the parallel nodes to be deleted
+# # nto nodes correspond to all parallel nodes to be merged
+#
+# # The two extremities nodes are not retrieved by my method, so we do it first manually
+# parallel_darts = mesh_analysis.mesh.find_parallel_darts(d)
+# last_dart = parallel_darts[-1]
+# ld1 = last_dart.get_beta(1)
+# ld11 = ld1.get_beta(1)
+# ld111 = ld11.get_beta(1)
+# last_node_from = ld111.get_node()
+# last_node_to = ld11.get_node()
+#
+# naf = NodeAnalysis(last_node_from)
+# nat = NodeAnalysis(last_node_to)
+# if naf.on_boundary() and last_node_from.get_ideal_adjacency() != 3 and nat.on_boundary() and last_node_to.get_ideal_adjacency() == 3:
+#     # We can't delete last node from, but last node to can be deleted
+#     na_node_to_delete = nat
+#     n_to_delete = last_node_to
+#     n_to = last_node_from
+# elif naf.on_boundary() and nat.on_boundary() and last_node_from.get_ideal_adjacency() == 3 and last_node_to.get_ideal_adjacency() != 3:
+#     na_node_to_delete = naf
+#     n_to_delete = last_node_from
+#     n_to = last_node_to
+# else:
+#     raise ValueError("No node to delete found")
+# adj_darts = na_node_to_delete.adjacent_darts()
+# for da in adj_darts:
+#     if da.get_node() == n_to_delete:
+#         da.set_node(n_to)
+# mesh_analysis.mesh.del_node(n_to_delete)
+#
+# dp = parallel_darts[-1]
+#
+# f = dp.get_face()
+# d1 = dp.get_beta(1)
+# d11 = d1.get_beta(1)
+# d111 = d11.get_beta(1)
+#
+# n_from = dp.get_node()
+# n_to = d1.get_node()
+#
+# naf = NodeAnalysis(n_from)
+# nat = NodeAnalysis(n_to)
+# if naf.on_boundary() and n_from.get_ideal_adjacency() != 3 and nat.on_boundary() and n_to.get_ideal_adjacency() == 3:
+#     # We can't delete last node from, but last node to can be deleted
+#     na_node_to_delete = nat
+#     n_to_delete = n_to
+#     n_to = n_from
+# elif naf.on_boundary() and nat.on_boundary() and n_from.get_ideal_adjacency() == 3 and n_to.get_ideal_adjacency() != 3:
+#     na_node_to_delete = naf
+#     n_to_delete = n_from
+#     n_to = n_to
+# else:
+#     raise ValueError("No node to delete found")
+#
+# n_del_score = n_to_delete.get_score()  # for later calculation
+# n_to_score = n_to.get_score()
+#
+# adj_darts = na_node_to_delete.adjacent_darts()
+# for da in adj_darts:
+#     if da.get_node() == n_to_delete:
+#         da.set_node(n_to)
+#
+# mesh_analysis.mesh.del_node(n_to_delete)
+#
+# # update beta 2 relations
+# d12 = d1.get_beta(2)
+# d1112 = d111.get_beta(2)
+# if d1112 is not None:
+#     d1112.set_beta(2, d12)
+# if d12 is not None:
+#     d12.set_beta(2, d1112)
+#
+# mesh_analysis.mesh.del_quad(dp, d1, d11, d111, f)
+#
+# # Update score
+# na_nto = NodeAnalysis(n_to)
+# if na_nto.on_boundary():
+#     n_to.set_score(n_to_score + n_del_score - 2)
+# else:
+#     n_to.set_score(n_to_score + n_del_score - 4)

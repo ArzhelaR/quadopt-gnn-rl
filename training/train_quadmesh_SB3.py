@@ -30,7 +30,7 @@ from mesh_model.reader import read_gmsh, read_dataset
 from training.exploit_SB3_policy import testPolicy
 
 
-def make_env(config, training_mesh):
+def make_env(config, learning_meshes):
     """
     Function to create gym environment for vectorize learning.
     :param config: configuration yaml file
@@ -40,12 +40,15 @@ def make_env(config, training_mesh):
     def _init():
         return gym.make(
             config["env"]["env_id"],
-            mesh=training_mesh,
+            learning_mesh=learning_meshes,
             max_episode_steps=config["env"]["max_episode_steps"],
             n_darts_selected=config["env"]["n_darts_selected"],
             deep=config["env"]["deep"],
             action_restriction=config["env"]["action_restriction"],
             with_degree_obs=config["env"]["with_degree_observation"],
+            render_mode=config["env"]["render_mode"],
+            obs_count=config["env"]["obs_count"],
+            debug=config["env"]["debug"],
         )
     return _init
 
@@ -109,11 +112,13 @@ class TensorboardCallback(BaseCallback):
             "nb_flip_cntcw": 0,
             "nb_split": 0,
             "nb_collapse": 0,
-            "nb_cleanup": 0,
+            "nb_cleanup_bdy": 0,
+            "nb_fuse": 0,
             "nb_invalid_flip": 0,
             "nb_invalid_split": 0,
             "nb_invalid_collapse": 0,
-            "nb_invalid_cleanup": 0,
+            "nb_invalid_cleanup_bdy": 0,
+            "nb_invalid_fuse": 0,
         }
         self.final_distance = 0
         self.normalized_return = 0
@@ -133,11 +138,13 @@ class TensorboardCallback(BaseCallback):
         self.actions_info["nb_flip_cntcw"] += self.locals["infos"][0].get("flip_cntcw", 0.0)
         self.actions_info["nb_split"] += self.locals["infos"][0].get("split", 0.0)
         self.actions_info["nb_collapse"] += self.locals["infos"][0].get("collapse", 0.0)
-        self.actions_info["nb_cleanup"] += self.locals["infos"][0].get("cleanup", 0.0)
+        self.actions_info["nb_cleanup_bdy"] += self.locals["infos"][0].get("cleanup_bdy", 0.0)
+        self.actions_info["nb_fuse"] += self.locals["infos"][0].get("fuse", 0.0)
         self.actions_info["nb_invalid_flip"] += self.locals["infos"][0].get("invalid_flip", 0.0)
         self.actions_info["nb_invalid_split"] += self.locals["infos"][0].get("invalid_split", 0.0)
         self.actions_info["nb_invalid_collapse"] += self.locals["infos"][0].get("invalid_collapse", 0.0)
-        self.actions_info["nb_invalid_cleanup"] += self.locals["infos"][0].get("invalid_cleanup", 0.0)
+        self.actions_info["nb_invalid_cleanup_bdy"] += self.locals["infos"][0].get("invalid_cleanup_bdy", 0.0)
+        self.actions_info["nb_invalid_fuse"] += self.locals["infos"][0].get("invalid_fuse", 0.0)
 
         self.mesh_reward += self.locals["infos"][0].get("mesh_reward", 0.0)
 
@@ -159,11 +166,15 @@ class TensorboardCallback(BaseCallback):
             self.logger.record("actions/nb_flip_cntcw", self.actions_info["nb_flip_cntcw"])
             self.logger.record("actions/nb_split", self.actions_info["nb_split"])
             self.logger.record("actions/nb_collapse", self.actions_info["nb_collapse"])
-            self.logger.record("actions/nb_cleanup", self.actions_info["nb_cleanup"])
+            self.logger.record("actions/nb_cleanup_bdy", self.actions_info["nb_cleanup_bdy"])
+            self.logger.record("actions/nb_fuse", self.actions_info["nb_cleanup_bdy"])
             self.logger.record("actions/invalid_flip", self.actions_info["nb_invalid_flip"]*100/(self.actions_info["nb_flip_cw"]+self.actions_info["nb_flip_cntcw"]) if (self.actions_info["nb_flip_cw"]+self.actions_info["nb_flip_cntcw"]) > 0 else 0)
             self.logger.record("actions/invalid_split", self.actions_info["nb_invalid_split"]*100/self.actions_info["nb_split"] if self.actions_info["nb_split"] > 0 else 0)
             self.logger.record("actions/invalid_collapse", self.actions_info["nb_invalid_collapse"]*100/self.actions_info["nb_collapse"]if self.actions_info["nb_collapse"] > 0 else 0)
-            self.logger.record("actions/invalid_cleanup", self.actions_info["nb_invalid_cleanup"]*100/self.actions_info["nb_cleanup"]if self.actions_info["nb_cleanup"] > 0 else 0)
+            self.logger.record("actions/invalid_cleanup_bdy", self.actions_info["nb_invalid_cleanup_bdy"]*100/self.actions_info["nb_cleanup_bdy"]if self.actions_info["nb_cleanup_bdy"] > 0 else 0)
+            self.logger.record("actions/invalid_fuse",
+                               self.actions_info["nb_invalid_fuse"] * 100 / self.actions_info[
+                                   "nb_fuse"] if self.actions_info["nb_fuse"] > 0 else 0)
             self.logger.record("episode_mesh_reward", self.mesh_reward)
             self.logger.record("episode_reward", self.current_episode_reward)
             self.logger.record("normalized_return", self.normalized_return)
@@ -326,9 +337,9 @@ if __name__ == '__main__':
             obs_count=config["env"]["obs_count"],
             debug=config["env"]["debug"],
         )
+        check_env(env, warn=True)
         #wrapped_env = CleanupWrapper(env)
     wrapped_env = env
-    check_env(env, warn=True)
 
 
     # model = PPO(

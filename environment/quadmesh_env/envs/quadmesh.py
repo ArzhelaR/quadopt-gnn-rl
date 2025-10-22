@@ -19,7 +19,8 @@ from mesh_model.mesh_struct.mesh import Mesh
 from mesh_model.mesh_struct.mesh_elements import Dart
 from mesh_model.mesh_analysis.quadmesh_analysis import QuadMeshTopoAnalysis
 from environment.quadmesh_env.envs.mesh_conv import get_x
-from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, cleanup_edge
+from environment.actions.quadrangular_actions import flip_edge_cntcw, flip_edge_cw, split_edge, collapse_edge, \
+    cleanup_edge, cleanup_boundary_edge, fuse_faces
 from environment.observation_register import ObservationRegistry
 from view.window import window_data, graph
 from mesh_display import MeshDisplay
@@ -30,7 +31,10 @@ class Actions(Enum):
     FLIP_CNTCW = 1
     SPLIT = 2
     COLLAPSE = 3
-    CLEANUP = 4
+    CLEANUP_BDY = 4
+    FUSE = 5
+    CLEANUP = 6
+
 
 
 class QuadMeshEnv(gym.Env):
@@ -108,6 +112,8 @@ class QuadMeshEnv(gym.Env):
             "n_flip_ccw": 0,
             "n_split": 0,
             "n_collapse": 0,
+            "n_cleanup_bdy": 0,
+            "n_fuse": 0,
             "n_cleanup": 0,
         }
 
@@ -142,8 +148,8 @@ class QuadMeshEnv(gym.Env):
         )
         self.observation = None
 
-        # We have 4 actions, flip clockwise, flip counterclockwise, split, collapse
-        self.action_space = gym.spaces.MultiDiscrete([4, self.n_darts_selected])
+        # We have 6 actions, flip clockwise, flip counterclockwise, split, collapse, fuse, cleanup_boundary
+        self.action_space = gym.spaces.MultiDiscrete([6, self.n_darts_selected])
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
@@ -172,7 +178,8 @@ class QuadMeshEnv(gym.Env):
             "n_flip_cntcw": 0,
             "n_split": 0,
             "n_collapse": 0,
-            "n_cleanup": 0,
+            "n_cleanup_bdy": 0,
+            "n_fuse": 0,
         }
 
         if self.render_mode=="human":
@@ -202,11 +209,13 @@ class QuadMeshEnv(gym.Env):
             "flip_cntcw": 1.0 if action[0]==Actions.FLIP_CNTCW.value else 0.0,
             "split": 1.0 if action[0]==Actions.SPLIT.value else 0.0,
             "collapse": 1.0 if action[0]==Actions.COLLAPSE.value else 0.0,
-            "cleanup": 1.0 if action[0]==Actions.CLEANUP.value else 0.0,
+            "cleanup_bdy": 1.0 if action[0]==Actions.CLEANUP_BDY.value else 0.0,
+            "fuse": 1.0 if action[0]==Actions.FUSE.value else 0.0,
             "invalid_flip": 1.0 if (action[0]==Actions.FLIP_CW.value or action[0]==Actions.FLIP_CNTCW.value) and not valid_action else 0.0,
             "invalid_split": 1.0 if action[0]==Actions.SPLIT.value and not valid_action else 0.0,
             "invalid_collapse": 1.0 if action[0]==Actions.COLLAPSE.value and not valid_action else 0.0,
-            "invalid_cleanup": 1.0 if action[0]==Actions.CLEANUP.value and not valid_action else 0.0,
+            "invalid_cleanup_bdy": 1.0 if action[0]==Actions.CLEANUP_BDY.value and not valid_action else 0.0,
+            "invalid_fuse": 1.0 if action[0]==Actions.FUSE.value and not valid_action else 0.0,
             "mesh" : self.mesh,
             "mesh_analysis" : self.mesh_analysis,
             "darts_selected" : self.darts_selected,
@@ -224,6 +233,7 @@ class QuadMeshEnv(gym.Env):
     def step(self, action: np.ndarray):
         mesh_before = deepcopy(self.mesh)
         self.ep_len+=1
+        truncated = False
 
         if self.observation_count:
             self.observation_registry.register_observation(self.observation)
@@ -251,9 +261,12 @@ class QuadMeshEnv(gym.Env):
             elif action[0] == Actions.COLLAPSE.value:
                 self.actions_info["n_collapse"] += 1
                 valid_action = collapse_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
-            elif action[0] == Actions.CLEANUP.value:
-                self.actions_info["n_cleanup"] += 1
-                valid_action = cleanup_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
+            elif action[0] == Actions.CLEANUP_BDY.value:
+                self.actions_info["n_cleanup_bdy"] += 1
+                valid_action = cleanup_boundary_edge(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
+            elif action[0] == Actions.FUSE.value:
+                self.actions_info["n_fuse"] += 1
+                valid_action = fuse_faces(self.mesh_analysis, n1, n2, check_mesh_structure=self.debug)
             else:
                 raise ValueError("Action not defined")
 
@@ -271,23 +284,22 @@ class QuadMeshEnv(gym.Env):
                 self._nodes_scores, self._mesh_score = next_nodes_score, self.next_mesh_score
                 self.observation = self._get_obs()
                 self.nb_invalid_actions = 0
+
             elif not valid_action:
                 reward = -5
                 mesh_reward = 0
                 terminated = False
                 self.nb_invalid_actions += 1
+                if self.nb_invalid_actions > 10:
+                    truncated = self.mesh_analysis.isTruncated(self.darts_selected)
             else:
                 raise ValueError("Invalid action")
-        if self.nb_invalid_actions > 10 :
-            truncated = self.mesh_analysis.isTruncated(self.darts_selected)
-        else:
-            truncated = False
 
         info = self._get_info(terminated, valid_action, action, mesh_reward)
 
         if self.render_mode == "human":
             self._render_frame()
-        if terminated or self.ep_len>= self.max_steps:
+        if terminated or self.ep_len>= 200:
             if self.recording and self.frames:
                 imageio.mimsave(f"episode_recordings/episode_{self.episode_count}.gif", self.frames, fps=3)
                 print("Image recorded")

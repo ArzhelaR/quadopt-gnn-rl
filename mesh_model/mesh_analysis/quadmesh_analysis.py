@@ -14,9 +14,10 @@ FLIP_CW = 0 # flip clockwise
 FLIP_CCW = 1 # flip counterclockwise
 SPLIT = 2
 COLLAPSE = 3
-CLEANUP = 4
-TEST_ALL = 5 # test if all actions are valid
-ONE_VALID = 6 # test if at least one action is valid
+CLEANUP_BDY = 4
+FUSE = 5
+TEST_ALL = 6 # test if all actions are valid
+ONE_VALID = 7 # test if at least one action is valid
 
 class QuadMeshAnalysis(GlobalMeshAnalysis):
     """
@@ -113,9 +114,7 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
         :return:
         """
         d = Dart(self.mesh, dart_id)
-        if d.get_beta(2) is None:
-            return False
-        elif action == FLIP_CW:
+        if action == FLIP_CW:
             return self.isFlipCWOk(d)
         elif action == FLIP_CCW:
             return self.isFlipCCWOk(d)
@@ -123,10 +122,12 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             return self.isSplitOk(d)
         elif action == COLLAPSE:
             return self.isCollapseOk(d)
-        elif action == CLEANUP:
-            return self.isCleanupOk(d)
+        elif action == CLEANUP_BDY:
+            return self.isCleanupBoundaryOk(d)
+        elif action == FUSE:
+            return self.isFuseOk(d)
         elif action == TEST_ALL:
-            return self.isFlipCCWOk(d) and self.isFlipCWOk(d) and self.isSplitOk(d) and self.isCollapseOk(d)
+            return self.isFlipCCWOk(d) and self.isFlipCWOk(d) and self.isSplitOk(d) and self.isCollapseOk(d) and self.isCleanupBoundaryOk(d) and self.isFuseOk(d)
         elif action == ONE_VALID:
             topo_flip_ccw= self.isFlipCCWOk(d)
             if topo_flip_ccw:
@@ -139,6 +140,12 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
                 return True
             topo_collapse = self.isCollapseOk(d)
             if topo_collapse:
+                return True
+            topo_cleanup_bdy = self.isCleanupBoundaryOk(d)
+            if topo_cleanup_bdy:
+                return True
+            topo_fuse = self.isFuseOk(d)
+            if topo_fuse:
                 return True
             return False
         else:
@@ -354,6 +361,8 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             return False
         elif d1.get_beta(2) is not None and d111.get_beta(2) is not None:
             return False
+        elif d1.get_beta(2) is None and d111.get_beta(2) is None:
+            return False
         else:
             return True
 
@@ -369,8 +378,9 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
 
     def isTruncated(self, darts_list)-> bool:
         for d_id in darts_list:
-            if self.isValidAction(d_id, 4):
-                return False
+            if d_id != -1 :
+                if self.isValidAction(d_id, 7):
+                    return False
         return True
 
     def isFuseOk(self, d: Dart) -> bool:
@@ -379,9 +389,17 @@ class QuadMeshTopoAnalysis(QuadMeshAnalysis):
             return False
         else:
             d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = self.mesh.active_quadrangles(d)
-
+        f = d.get_face()
         if d1.get_beta(2)== d2111:
-            return True
+            #If the two faces to fuse have more than 2 common edges, fuse can't be performed
+            d212 = d21.get_beta(2)
+            d2112 = d211.get_beta(2)
+            if d212 is not None and d212.get_face()==f:
+                return False
+            elif d2112 is not None and d2112.get_face()==f:
+                return False
+            else:
+                return True
         else:
             return False
 

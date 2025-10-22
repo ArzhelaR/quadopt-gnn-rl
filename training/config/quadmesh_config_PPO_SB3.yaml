@@ -1,9 +1,9 @@
 project_name : "Quadmesh"
-experiment_name : "full-dataset-obs36-10darts-v0"
+experiment_name : "6-actions-obs36-mixed2-v1"
 
-description : "Apprentissage avec une observation de taille 36. Après optimisation de l'environnement. Nouvelle observatin avec dummy vertices et pas de temps augmenté à 150  "
+description : "Apprentissage avec une observation de taille 36. Dataset mixte v2"
 
-total_timesteps : 500000
+total_timesteps : 10000000
 
 paths:
   log_dir : "training/results/e1/"
@@ -40,9 +40,9 @@ ppo:
   policy : MlpPolicy
   n_steps : 2048
   n_epochs : 5
-  batch_size: 64
+  batch_size: 128
   learning_rate : 0.0001
-  gamma : 0.9
+  gamma : 0.99
   clip_range : 0.2
 
 eval:
