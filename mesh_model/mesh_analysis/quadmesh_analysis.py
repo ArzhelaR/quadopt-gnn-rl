@@ -8,7 +8,7 @@ import warnings
 from mesh_model.mesh_struct.mesh_elements import Dart, Node, Face
 from mesh_model.mesh_struct.mesh import Mesh
 from mesh_model.mesh_analysis.global_mesh_analysis import GlobalMeshAnalysis, NodeAnalysis
-from view.mesh_plotter.mesh_plots import plot_mesh
+# from view.mesh_plotter.mesh_plots import plot_mesh
 
 FLIP_CW = 0 # flip clockwise
 FLIP_CCW = 1 # flip counterclockwise

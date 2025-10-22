@@ -58,7 +58,7 @@ class QuadMeshEnv(gym.Env):
     def __init__(
             self,
             learning_mesh=None,
-            max_episode_steps: int = 50,
+            max_episode_steps: int = 300,
             n_darts_selected: int = 20,
             deep: int = 6,
             render_mode:  Optional[str] = None,
@@ -301,9 +301,10 @@ class QuadMeshEnv(gym.Env):
             self._render_frame()
         if terminated or self.ep_len>= 200:
             if self.recording and self.frames:
-                imageio.mimsave(f"episode_recordings/episode_{self.episode_count}.gif", self.frames, fps=1)
+                imageio.mimsave(f"episode_recordings/episode_{self.episode_count}.gif", self.frames, fps=3)
                 print("Image recorded")
                 self.episode_count +=1
+                self.frames = []
 
         return self.observation, reward, terminated, truncated, info
 
@@ -367,7 +368,7 @@ class QuadMeshEnv(gym.Env):
                 self.window.blit(text_surface, (x, y_start + i * line_spacing))
 
         self.clock.tick(60)
-        pygame.time.delay(600)
+        pygame.time.delay(150)
         pygame.display.flip()
         if self.recording:
             pixels = pygame.surfarray.array3d(pygame.display.get_surface())

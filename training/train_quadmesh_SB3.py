@@ -240,6 +240,12 @@ class TensorboardCallback(BaseCallback):
         # self.logger.record("figures/after", Figure(after, close=True), exclude=("stdout", "log"))
         # self.logger.dump(step=self.num_timesteps)
 
+    def get_state(self):
+        return {"episode_count": self.episode_count}
+    def set_state(self, state):
+        self.episode_count = state["episode_count"]
+
+
 if __name__ == '__main__':
 
     # PARAMETERS CONFIGURATION
@@ -336,28 +342,32 @@ if __name__ == '__main__':
     wrapped_env = env
 
 
-    model = PPO(
-        policy=config["ppo"]["policy"],
-        env=wrapped_env,
-        n_steps=config["ppo"]["n_steps"],
-        n_epochs=config["ppo"]["n_epochs"],
-        batch_size=config["ppo"]["batch_size"],
-        learning_rate=config["ppo"]["learning_rate"],
-        gamma=config["ppo"]["gamma"],
-        verbose=1,
-        tensorboard_log=log_dir
-    )
+    # model = PPO(
+    #     policy=config["ppo"]["policy"],
+    #     env=wrapped_env,
+    #     n_steps=config["ppo"]["n_steps"],
+    #     n_epochs=config["ppo"]["n_epochs"],
+    #     batch_size=config["ppo"]["batch_size"],
+    #     learning_rate=config["ppo"]["learning_rate"],
+    #     gamma=config["ppo"]["gamma"],
+    #     verbose=1,
+    #     tensorboard_log=log_dir
+    # )
 
-    # Uncomment the line below if we want to train over a known policy, the line above (322) must be commented
-    #model = PPO.load("training/policy_saved/quad-sb3/New-dataset-v0.zip", env= wrapped_env)
+    model = PPO.load("training/policy_saved/e1/full-dataset-obs36-10darts-v0/full-dataset-obs36-10darts-v0_5000000_steps.zip", env=wrapped_env, tensorboard_log=log_dir)
+
+    tb_callback=TensorboardCallback(model)
+
+    tb_callback.set_state({"episode_count": 83140})
 
     start_time = time.perf_counter()
     print("-----------Starting learning-----------")
     model.learn(
         total_timesteps=config["total_timesteps"],
         tb_log_name=config["experiment_name"],
-        callback=[HParamCallback(),TensorboardCallback(model), checkpoint_callback], # , WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"])
-        progress_bar=True
+        callback=[HParamCallback(),tb_callback, checkpoint_callback], # , WandbCallback(model_save_path=config["paths"]["wandb_model_saving_dir"]+config["experiment_name"])
+        progress_bar=True,
+        reset_num_timesteps=False
     )
     end_time = time.perf_counter()
     print("-----------Learning ended------------")

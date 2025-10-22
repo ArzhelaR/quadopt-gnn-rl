@@ -43,7 +43,6 @@ def write_json(filename: string, mesh: Mesh) -> None:
     with open(filename, "w") as f:
         json.dump(data, f)
 
-
 def write_dataset(dir: string, dataset:list):
     os.makedirs(dir, exist_ok=True)
     for i, cmap in enumerate(dataset):
