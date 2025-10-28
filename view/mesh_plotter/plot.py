@@ -6,6 +6,6 @@ from mesh_model.reader import read_dataset, read_gmsh, read_json
 # #plot_dataset(dataset)
 # save_dataset_plot(dataset, "Supplementary_plots/.png")
 # print("File saved")
-cmap = read_gmsh("../../mesh_files/imr3.msh") # ../../training/dataset/results/imr3_results/mesh_0.json
+cmap = read_json("../../mesh_files/L_config.json") # ../../training/dataset/results/imr3_results/mesh_0.json
 ma = QuadMeshTopoAnalysis(cmap)
 plot_mesh(ma.mesh, scores=True)

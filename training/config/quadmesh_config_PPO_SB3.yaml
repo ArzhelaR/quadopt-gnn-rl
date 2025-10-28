@@ -1,23 +1,23 @@
 project_name : "Quadmesh"
-experiment_name : "6-actions-obs36-mixed2-v1"
+experiment_name : "6-actions-TEST"
 
 description : "Apprentissage avec une observation de taille 36. Dataset mixte v2"
 
 total_timesteps : 10000000
 
 paths:
-  log_dir : "training/results/e1/"
-  policy_saving_dir : "training/policy_saved/e1/"
-  wandb_model_saving_dir : "training/wandb_models/e1/"
-  episode_recording_dir: "training/results/e1/episode_recordings/" # Not working
-  observation_counts_dir: "training/results/e1/observation_counts/"
-  parameters_saving_dir : "training/results/e1/parameters/"
+  log_dir : "training/results/e3/"
+  policy_saving_dir : "training/policy_saved/e3/"
+  wandb_model_saving_dir : "training/wandb_models/e3/"
+  episode_recording_dir: "training/results/e3/episode_recordings/" # Not working
+  observation_counts_dir: "training/results/e3/observation_counts/"
+  parameters_saving_dir : "training/results/e3/parameters/"
 
 dataset:
-  training_dataset_dir : "training/dataset/training_dataset"
+  training_dataset_dir : None # "training/dataset/training_dataset"
   exploit_dataset_dir : "training/dataset/test_dataset"
   #If datasets directory above are set to None, the agent will either train or be exploited on a single mesh file given below
-  training_mesh_file_path : "mesh_files/simple_quad.msh"
+  training_mesh_file_path : "mesh_files/L_config.json"
   evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
 
 seed : 1
@@ -26,9 +26,9 @@ env:
   env_id : "Quadmesh-v0"
   n_vec_envs : 0
   max_episode_steps : 75
-  n_darts_selected : 10
+  n_darts_selected : 5
   deep : 36
-  obs_size : 360 # It needs to be calculated manually
+  obs_size : 180 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   render_mode : null

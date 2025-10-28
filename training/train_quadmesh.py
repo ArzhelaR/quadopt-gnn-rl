@@ -17,9 +17,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 #Internal import
 from environment import quadmesh_env
-from mesh_model.reader import read_gmsh, read_dataset
+from mesh_model.reader import read_gmsh, read_dataset, read_json
 
-from model_RL.PPO_MeshingO import PPO
+from model_RL.PPO_TMesh import PPO
 
 
 def log_init(log_writer, config):
@@ -60,19 +60,27 @@ if __name__ == '__main__':
         config = yaml.safe_load(f)
 
     experiment_name = config["experiment_name"]
-    learning_meshes = read_dataset(config["dataset"]["training_dataset_dir"])
+    training_dataset = read_dataset(config["dataset"]["training_dataset_dir"])
+    training_single_mesh = read_json(config["dataset"]["training_mesh_file_path"])
+    if training_dataset:
+        learning_meshes = training_dataset
+    elif training_single_mesh is not None:
+        learning_meshes = training_single_mesh
+    else:
+        raise ValueError("Training mesh not found")
+
     # Create log dir
     log_dir = config["paths"]["log_dir"]
     os.makedirs(log_dir, exist_ok=True)
 
-    wandb.tensorboard.patch(root_logdir=log_dir)
-    wandb.init(
-        project="Quadmesh-learning",
-        name=config["experiment_name"],
-        config=config,
-        sync_tensorboard=True,
-        save_code=True
-    )
+    # wandb.tensorboard.patch(root_logdir=log_dir)
+    # wandb.init(
+    #     project="Quadmesh-learning",
+    #     name=config["experiment_name"],
+    #     config=config,
+    #     sync_tensorboard=True,
+    #     save_code=True
+    # )
 
     # SEEDING
     seed = config["seed"]
@@ -85,6 +93,7 @@ if __name__ == '__main__':
     env = gym.make(
         config["env"]["env_id"],
         learning_mesh=learning_meshes,
+        analysis_type = config["env"]["analysis_type"],
         max_episode_steps=config["env"]["max_episode_steps"],
         n_darts_selected=config["env"]["n_darts_selected"],
         deep=config["env"]["deep"],

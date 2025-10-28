@@ -1,43 +1,43 @@
 project_name : "Quadmesh"
-experiment_name : "full_dataset_obs36_5darts_perso-v0"
+experiment_name : "T6actions-v3-mask-3act-new2"
 description : ""
 
 paths:
-  log_dir : "training/results/e2/"
-  policy_saving_dir : "training/policy_saved/e2/"
-  wandb_model_saving_dir : "training/wandb_models/e2/"
-  episode_recording_dir: "training/results/e2/episode_recording/"
-  observation_counts_dir: "training/results/e2/observation_counts/"
+  log_dir : "training/results/e3/"
+  policy_saving_dir : "training/policy_saved/e3/"
+  wandb_model_saving_dir : "training/wandb_models/e3/"
+  episode_recording_dir: "training/results/e3/episode_recording/"
+  observation_counts_dir: "training/results/e3/observation_counts/"
 
 dataset:
-  training_dataset_dir: "training/dataset/training_dataset"
+  training_dataset_dir: None # "training/dataset/training_dataset"
   exploit_dataset_dir: "training/dataset/test_dataset"
-  evaluation_mesh_file_path : "mesh_files/simple_quad.msh"
-  training_mesh_file_path : "mesh_files/simple_quad.msh"
+  evaluation_mesh_file_path : "mesh_files/L_config.json"
+  training_mesh_file_path : "mesh_files/L_config.json"
 
 seed : 1
 
 env:
   env_id : "Quadmesh-v0"
   max_episode_steps : 75
-  n_darts_selected : 5
+  n_darts_selected : 1
   deep : 36
-  obs_size : 180 # It needs to be calculated manually
+  obs_size : 36 # It needs to be calculated manually
   action_restriction : false
   with_degree_observation : false
   reward_function : 0 # 0 if basics, 1 if penalize, 2 otherwise
   render_mode : null
   obs_count : false
-  analysis_type : "topo" #only the topo analysis type is working
+  analysis_type : "masked" #only the topo analysis type is working
   debug : false
 
 ppo:
-  n_actions : 4
+  n_actions : 6
   n_iterations : 30000
-  n_episodes_per_iteration : 30
+  n_episodes_per_iteration : 50
   n_epochs : 5
   batch_size: 64
-  learning_rate : 0.0001
+  learning_rate : 0.00001
   gamma : 0.9
 
 eval:

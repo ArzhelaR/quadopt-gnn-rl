@@ -106,6 +106,7 @@ class QuadMeshEnv(gym.Env):
         self.episode_count = 0
         self.ep_len = 0
         self.darts_selected = [] # darts id observed
+        self.mask = np.zeros(obs_shape)
 
         self.actions_info = {
             "n_flip_cntcw": 0,
@@ -140,16 +141,16 @@ class QuadMeshEnv(gym.Env):
             os.makedirs("episode_recordings", exist_ok=True)
 
         # Observation and action spaces
-        self.observation_space = gym.spaces.Box(
+        self.observation_space = gym.spaces.Sequence(gym.spaces.Box(
             low=-8,  # nodes min degree : -6
             high=4,  # nodes max degree : 2
             shape=obs_shape,
             dtype=np.int64
-        )
+        ))
         self.observation = None
 
         # We have 6 actions, flip clockwise, flip counterclockwise, split, collapse, fuse, cleanup_boundary
-        self.action_space = gym.spaces.MultiDiscrete([6, self.n_darts_selected])
+        self.action_space = gym.spaces.Sequence(gym.spaces.MultiDiscrete([6, self.n_darts_selected]))
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
@@ -192,8 +193,9 @@ class QuadMeshEnv(gym.Env):
         return self.observation, info
 
     def _get_obs(self):
-        irregularities, darts_list = get_x(self.mesh_analysis, self.n_darts_selected, self.deep, self.analysis_type, self.restricted, self._nodes_scores)
+        irregularities, darts_list, mask = get_x(self.mesh_analysis, self.n_darts_selected, self.deep, self.analysis_type, self.restricted, self._nodes_scores)
         self.darts_selected = darts_list
+        self.mask = mask
         return irregularities
 
     def _get_info(self, terminated, valid_action, action, mesh_reward):
@@ -219,6 +221,7 @@ class QuadMeshEnv(gym.Env):
             "mesh" : self.mesh,
             "mesh_analysis" : self.mesh_analysis,
             "darts_selected" : self.darts_selected,
+            "mask" : self.mask,
             "observation_registry" : self.observation_registry if self.observation_count else None,
         }
 
@@ -281,9 +284,12 @@ class QuadMeshEnv(gym.Env):
                 else:
                     mesh_reward = (self._mesh_score - self.next_mesh_score)*10
                     reward = mesh_reward
+                    if action[0] == Actions.FUSE.value:
+                        reward+=15
                 self._nodes_scores, self._mesh_score = next_nodes_score, self.next_mesh_score
                 self.observation = self._get_obs()
                 self.nb_invalid_actions = 0
+
 
             elif not valid_action:
                 reward = -5
@@ -294,7 +300,6 @@ class QuadMeshEnv(gym.Env):
                     truncated = self.mesh_analysis.isTruncated(self.darts_selected)
             else:
                 raise ValueError("Invalid action")
-
         info = self._get_info(terminated, valid_action, action, mesh_reward)
 
         if self.render_mode == "human":

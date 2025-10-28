@@ -4,10 +4,11 @@ from mesh_model.mesh_struct.mesh_elements import Dart
 from mesh_model.mesh_struct.mesh import Mesh
 
 
-def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricted:bool, nodes_scores: list[int]):
+def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricted:bool, nodes_scores: list[int], full=True):
     """
     Get the feature matrix for the observation.
     """
+    mask = None
     mesh = m_analysis.mesh
     if analysis_type == "boundary":
         template, darts_id = get_template_boundary(m_analysis, deep)
@@ -17,6 +18,8 @@ def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricte
         template, darts_id = get_template_new(m_analysis, deep)
     elif analysis_type == "topo": # the last method implemented and the one mainly used
         template, darts_id = get_template(m_analysis, deep)
+    elif analysis_type == "masked": # the last method implemented and the one mainly used
+        template, darts_id, mask = get_template_masked(m_analysis, deep)
     else :
         raise ValueError("Unknown analysis type")
 
@@ -38,15 +41,19 @@ def get_x(m_analysis, n_darts_selected: int, deep :int, analysis_type, restricte
         valid_template = np.delete(template, darts_to_delete, axis=0)
     else:
         valid_template = template
-    score_sum = np.sum(np.abs(valid_template[:,:deep]), axis=1)
-    indices_selected_darts = np.argsort(score_sum)[-n_darts_selected:][::-1]
 
-    valid_dart_ids = [darts_id[i] for i in indices_selected_darts]
-    X = valid_template[indices_selected_darts, :]
-    while len(valid_dart_ids) != n_darts_selected:
-        valid_dart_ids.append(-1)
-        X = np.vstack((X, np.zeros((1, X.shape[1]))))
-    return X, np.array(valid_dart_ids)
+    if not full:
+        score_sum = np.sum(np.abs(valid_template[:,:deep]), axis=1)
+        indices_selected_darts = np.argsort(score_sum)[-n_darts_selected:][::-1]
+
+        valid_dart_ids = [darts_id[i] for i in indices_selected_darts]
+        X = valid_template[indices_selected_darts, :]
+        while len(valid_dart_ids) != n_darts_selected:
+            valid_dart_ids.append(-1)
+            X = np.vstack((X, np.zeros((1, X.shape[1]))))
+        return X, np.array(valid_dart_ids)
+    else:
+        return valid_template, np.array(darts_id), mask
 
 
 def get_template(m_analysis, deep: int):
@@ -107,6 +114,106 @@ def get_template(m_analysis, deep: int):
     template = template[:n_darts, :]
 
     return template, dart_ids
+
+
+def get_template_masked(m_analysis, deep: int):
+    size = len(m_analysis.mesh.dart_info)
+    template = np.zeros((size, deep), dtype=np.int64)
+    mask = np.zeros((size, 6), dtype=np.int64)
+    dart_ids = []
+    n_darts = 0
+
+    for d_info in m_analysis.mesh.active_darts():
+        n_darts += 1
+        d_id = d_info[0]
+        dart_ids.append(d_id)
+        d = Dart(m_analysis.mesh, d_id)
+        A = d.get_node()
+        d1 = d.get_beta(1)
+        B = d1.get_node()
+        d11 = d1.get_beta(1)
+        C = d11.get_node()
+        d111 = d11.get_beta(1)
+        D = d111.get_node()
+
+        # Template niveau 1
+        template[n_darts - 1, 0] = A.get_score()
+        template[n_darts - 1, 1] = B.get_score()
+        template[n_darts - 1, 2] = C.get_score()
+        template[n_darts - 1, 3] = D.get_score()
+
+        E = [A,B,C,D]
+        deep_captured = len(E)
+        d2 = d.get_beta(2)
+        d12 = d1.get_beta(2)
+        d112 = d11.get_beta(2)
+        d1112 = d111.get_beta(2)
+        F = [d2, d12, d112, d1112]
+        if deep>4:
+            while len(E)<deep:
+                df = F.pop(0)
+                if df is not None:
+                    df1 = df.get_beta(1)
+                    df11 = df1.get_beta(1)
+                    df111 = df11.get_beta(1)
+                    F.append(df1)
+                    F.append(df11)
+                    F.append(df111)
+                    N1, N2 = df11.get_node(), df111.get_node()
+                    E.append(N1)
+                    template[n_darts-1, len(E)-1] = N1.get_score()
+                    E.append(N2)
+                    template[n_darts - 1, len(E)-1] = N2.get_score()
+                else:
+                    E.extend([None,None])
+                    F.append(None)
+                    F.append(None)
+                    F.append(None)
+                    #template[n_darts - 1, len(E) - 1] = -500 # dummy vertices are assigned to -500
+                    #template[n_darts - 1, len(E) - 2] = -500 # dummy vertices are assigned to -500
+        #Mask
+        f = d.get_face()
+        if d2 is not None:
+            d2, d1, d11, d111, d21, d211, d2111, n1, n2, n3, n4, n5, n6 = m_analysis.mesh.active_quadrangles(d)
+            d212 = d21.get_beta(2)
+            d2112 = d211.get_beta(2)
+            d2111 = d2.get_beta(1).get_beta(1).get_beta(1)
+        if d_info[2] == -1 and m_analysis.isCleanupBoundaryOk(d):
+            mask[n_darts - 1, 0] = 0
+            mask[n_darts - 1, 1] = 0
+            mask[n_darts - 1, 2] = 0
+            mask[n_darts - 1, 3] = 0
+            mask[n_darts - 1, 4] = 1
+            mask[n_darts - 1, 5] = 0
+        elif d_info[2] == -1:
+            mask[n_darts - 1, 0] = 0
+            mask[n_darts - 1, 1] = 0
+            mask[n_darts - 1, 2] = 0
+            mask[n_darts - 1, 3] = 0
+            mask[n_darts - 1, 4] = 0
+            mask[n_darts - 1, 5] = 0
+        elif d12 is not None and d12==d2111 and not (
+                (d212 is not None and d212.get_face() == f) and not
+                (d2112 is not None and d2112.get_face() == f)
+              ):
+            mask[n_darts - 1, 0] = 0
+            mask[n_darts - 1, 1] = 0
+            mask[n_darts - 1, 2] = 0
+            mask[n_darts - 1, 3] = 0
+            mask[n_darts - 1, 4] = 0
+            mask[n_darts - 1, 5] = 1
+        else:
+            mask[n_darts - 1, 0] = 1
+            mask[n_darts - 1, 1] = 0
+            mask[n_darts - 1, 2] = 0
+            mask[n_darts - 1, 3] = 0
+            mask[n_darts - 1, 4] = 0
+            mask[n_darts - 1, 5] = 0
+
+    template = template[:n_darts, :]
+    mask = mask[:n_darts, :]
+
+    return template, dart_ids, mask
 
 def get_template_new(m_analysis, deep: int):
     size = len(m_analysis.mesh.dart_info)

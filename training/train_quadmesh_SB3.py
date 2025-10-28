@@ -26,7 +26,7 @@ from wandb.integration.sb3 import WandbCallback
 
 from environment import quadmesh_env
 import mesh_model.random_quadmesh as QM
-from mesh_model.reader import read_gmsh, read_dataset
+from mesh_model.reader import read_gmsh, read_dataset, read_json
 from training.exploit_SB3_policy import testPolicy
 
 
@@ -260,10 +260,10 @@ if __name__ == '__main__':
 
     # TRAINING MESHES
     training_dataset = read_dataset(config["dataset"]["training_dataset_dir"])
-    training_single_mesh = read_gmsh(config["dataset"]["training_mesh_file_path"])
+    training_single_mesh = read_json(config["dataset"]["training_mesh_file_path"])
 
 
-    if training_dataset is not None:
+    if training_dataset:
         learning_meshes = training_dataset
     elif training_single_mesh is not None:
         learning_meshes = training_single_mesh
@@ -342,23 +342,23 @@ if __name__ == '__main__':
     wrapped_env = env
 
 
-    # model = PPO(
-    #     policy=config["ppo"]["policy"],
-    #     env=wrapped_env,
-    #     n_steps=config["ppo"]["n_steps"],
-    #     n_epochs=config["ppo"]["n_epochs"],
-    #     batch_size=config["ppo"]["batch_size"],
-    #     learning_rate=config["ppo"]["learning_rate"],
-    #     gamma=config["ppo"]["gamma"],
-    #     verbose=1,
-    #     tensorboard_log=log_dir
-    # )
+    model = PPO(
+        policy=config["ppo"]["policy"],
+        env=wrapped_env,
+        n_steps=config["ppo"]["n_steps"],
+        n_epochs=config["ppo"]["n_epochs"],
+        batch_size=config["ppo"]["batch_size"],
+        learning_rate=config["ppo"]["learning_rate"],
+        gamma=config["ppo"]["gamma"],
+        verbose=1,
+        tensorboard_log=log_dir
+    )
 
-    model = PPO.load("training/policy_saved/e1/full-dataset-obs36-10darts-v0/full-dataset-obs36-10darts-v0_5000000_steps.zip", env=wrapped_env, tensorboard_log=log_dir)
+    # model = PPO.load("training/policy_saved/e1/full-dataset-obs36-10darts-v0/full-dataset-obs36-10darts-v0_5000000_steps.zip", env=wrapped_env, tensorboard_log=log_dir)
 
     tb_callback=TensorboardCallback(model)
 
-    tb_callback.set_state({"episode_count": 83140})
+    #tb_callback.set_state({"episode_count": 83140})
 
     start_time = time.perf_counter()
     print("-----------Starting learning-----------")
